@@ -33,7 +33,7 @@ test_hogares$test = 1
 train_personas$test = 0 #binaria para reconocer qué observaciones pertenecen al test set
 train_hogares$test = 0
 
-# Obtenemos las variables que faltan para los sets de test 
+# Obtenemos las variables que faltan para los sets de test tanto para personas como hogares
 test_personas1 <- left_join(test_personas, train_personas) # obtenemos todas las variables para las personas del test set
 dim(test_personas1)
 dim(test_personas)
