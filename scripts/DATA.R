@@ -76,3 +76,5 @@ skim(train_hogares)  #ingtothogar e ingtotug son similares más no iguales
 colnames(test_personas)
 colnames(test_hogares)
 
+#mo tenemos variables de ingreso... 
+
