@@ -1,18 +1,26 @@
-#DATA 
+#**************************************************************************************#
+#                                    TALLER 1 BDML                                     #
+#                        Uniandes: Sofia Charry Tobar                                  #
+#                                  Laura Manuela Rodríguez Morales                     #
+#                                  Nicol Valeria Rodríguez Rodríguez                   #
+#                                  Brayan Alexander Vargas Rojas                       #
+#                          Fuente: GEIH DANE                                           #
+#**************************************************************************************#
+
+# Limpiar el espacio
+rm(list = ls(all.names = TRUE))
 
 ###  cargamos las bases 
   #1. Train
 library(pacman)
-
-
 p_load("readr","tidyverse", "dplyr", "arsenal")
 
-train_personas <- read_csv("stores/train_personas.zip")
-train_hogares <- read_csv("stores/train_hogares.zip")
+train_personas <- read_csv("data/train_personas.zip")
+train_hogares <- read_csv("data/train_hogares.zip")
 
   #2. Test
-test_personas <- read_csv("stores/test_personas.zip")
-test_hogares <- read_csv("stores/test_hogares.zip")
+test_personas <- read_csv("data/test_personas.zip")
+test_hogares <- read_csv("data/test_hogares.zip")
 
 ### ¿Qué variables faltan? 
   #hogares train vs test: para conocer qué variables faltan en test
@@ -42,5 +50,29 @@ test_hogares1 <- left_join(test_hogares, train_hogares) # obtenemos todas las va
 dim(test_hogares1)
 dim(test_hogares)
 
+#Creamos las nuevas col pero estas no tienen info
+library(skimr)
+skim(test_personas1)
+skim(test_personas)
 
+
+#### UNIR BASES SEGÚN ID 
+colnames(train_personas)
+colnames(train_hogares)
+
+## TRAIN
+
+#1. Agrupar la variable que queremos pasar de una base a otra 
+sum_ingresos<-train_personas %>% group_by(id) %>% summarize(Ingtot_hogar=sum(Ingtot,na.rm = TRUE))  # It returns one row for each combination of grouping variables, borramos NA
+summary(sum_ingresos)
+
+#2. Agregar la variable que agrupamos previamente
+train_hogares<-left_join(train_hogares,sum_ingresos)
+colnames(train_hogares)
+
+skim(train_hogares)  #ingtothogar e ingtotug son similares más no iguales 
+
+##TEST
+colnames(test_personas)
+colnames(test_hogares)
 
