@@ -62,21 +62,29 @@ ifelse(train_personas$Oc      == 1, 1, 0)
 
 
       #vamos a agrupar las familias por sumas 
-sumP6585s1<-train_personas %>% group_by(id) %>% summarize(P6585s1h=sum(P6585s1,na.rm = TRUE))
-sumP6585s3<-train_personas %>% group_by(id) %>% summarize(P6585s3h=sum(P6585s3,na.rm = TRUE))
-sumP7510s3<-train_personas %>% group_by(id) %>% summarize(P7510s3h=sum(P7510s3,na.rm = TRUE))
-sumP7505  <-train_personas %>% group_by(id) %>% summarize(P7505h  =sum(P6585s1,na.rm = TRUE))
-sumP6920  <-train_personas %>% group_by(id) %>% summarize(P6920h  =sum(P6585s1,na.rm = TRUE))
-sumDes    <-train_personas %>% group_by(id) %>% summarize(Desh    =sum(Des,na.rm = TRUE))
-sumOc     <-train_personas %>% group_by(id) %>% summarize(Och     =sum(Oc,na.rm = TRUE))
+sumP6585s1<-train_personas %>% group_by(id) %>% reframe(P6585s1h=sum(P6585s1,na.rm = TRUE))
+sumP6585s3<-train_personas %>% group_by(id) %>% reframe(P6585s3h=sum(P6585s3,na.rm = TRUE))
+sumP7510s3<-train_personas %>% group_by(id) %>% reframe(P7510s3h=sum(P7510s3,na.rm = TRUE))
+sumP7505  <-train_personas %>% group_by(id) %>% reframe(P7505h  =sum(P6585s1,na.rm = TRUE))
+sumP6920  <-train_personas %>% group_by(id) %>% reframe(P6920h  =sum(P6585s1,na.rm = TRUE))
+sumDes    <-train_personas %>% group_by(id) %>% reframe(Desh    =sum(Des,na.rm = TRUE))
+sumOc     <-train_personas %>% group_by(id) %>% reframe(Och     =sum(Oc,na.rm = TRUE))
+orden     <-train_personas %>% group_by(id) %>% reframe(Orden   =sum(Orden,na.rm = TRUE))
 
-     #y las pegamos a la base de hogares 
+#y las pegamos a la base de hogares 
 library(plyr)
-train_hogares<-join_all(list(train_hogares,sumP6585s3, sumP6585s1, sumP7510s3, sumP7505, sumP6920, sumDes, sumOc), by= 'id', type= 'left')
+train_hogares<-join_all(list(train_personas, orden, sumP6585s3, sumP6585s1, sumP7510s3, sumP7505, sumP6920, sumDes, sumOc), by= 'id', type= 'left')
+
+#dividimos por personas en la casa para tener la proporción 
+train_hogares$prop_P6585s1h <- train_hogares$P6585s1h / train_hogares$Orden
+train_hogares$prop_P6585s3h <- train_hogares$P6585s3h / train_hogares$Orden
+train_hogares$prop_P7510s3h <- train_hogares$P7510s3h / train_hogares$Orden
+train_hogares$prop_P7505h   <- train_hogares$P7505h   / train_hogares$Orden
+train_hogares$prop_P6920h   <- train_hogares$P6920h   / train_hogares$Orden
+train_hogares$prop_Desh     <- train_hogares$Desh     / train_hogares$Orden
+train_hogares$prop_Och      <- train_hogares$Och      / train_hogares$Orden
+
 colnames(train_hogares)
-
-      #dividimos por personas en la casa para tener la proporción 
-
 
 #PARA TEST------------------------------------------------------------------------------
 #1. Creando variables
@@ -96,13 +104,13 @@ ifelse(test_personas$Oc      == 1, 1, 0)
 
 
         #vamos a agrupar las familias por sumas 
-sumP6585s1<-test_personas %>% group_by(id) %>% summarize(P6585s1h=sum(P6585s1,na.rm = TRUE))
-sumP6585s3<-test_personas %>% group_by(id) %>% summarize(P6585s3h=sum(P6585s3,na.rm = TRUE))
-sumP7510s3<-test_personas %>% group_by(id) %>% summarize(P7510s3h=sum(P7510s3,na.rm = TRUE))
-sumP7505  <-test_personas %>% group_by(id) %>% summarize(P7505h  =sum(P6585s1,na.rm = TRUE))
-sumP6920  <-test_personas %>% group_by(id) %>% summarize(P6920h  =sum(P6585s1,na.rm = TRUE))
-sumDes    <-test_personas %>% group_by(id) %>% summarize(Desh    =sum(Des,na.rm = TRUE))
-sumOc     <-test_personas %>% group_by(id) %>% summarize(Och     =sum(Oc,na.rm = TRUE))
+sumP6585s1<-test_personas %>% group_by(id) %>% reframe(P6585s1h=sum(P6585s1,na.rm = TRUE))
+sumP6585s3<-test_personas %>% group_by(id) %>% reframe(P6585s3h=sum(P6585s3,na.rm = TRUE))
+sumP7510s3<-test_personas %>% group_by(id) %>% reframe(P7510s3h=sum(P7510s3,na.rm = TRUE))
+sumP7505  <-test_personas %>% group_by(id) %>% reframe(P7505h  =sum(P6585s1,na.rm = TRUE))
+sumP6920  <-test_personas %>% group_by(id) %>% reframe(P6920h  =sum(P6585s1,na.rm = TRUE))
+sumDes    <-test_personas %>% group_by(id) %>% reframe(Desh    =sum(Des,na.rm = TRUE))
+sumOc     <-test_personas %>% group_by(id) %>% reframe(Och     =sum(Oc,na.rm = TRUE))
 
         #y las pegamos a la base de hogares 
 test_hogares<-join_all(list(test_hogares,sumP6585s3, sumP6585s1, sumP7510s3, sumP7505, sumP6920, sumDes, sumOc), by= 'id', type= 'left')
