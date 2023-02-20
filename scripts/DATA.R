@@ -15,66 +15,55 @@ rm(list = ls(all.names = TRUE))
 library(pacman)
 p_load("readr","tidyverse", "dplyr", "arsenal")
 
-train_personas <- read_csv("data/train_personas.zip")
-train_hogares <- read_csv("data/train_hogares.zip")
+train_personas_original <- read_csv("data/train_personas.zip")
+train_hogares_original <- read_csv("data/train_hogares.zip")
 
   #2. Test
-test_personas <- read_csv("data/test_personas.zip")
-test_hogares <- read_csv("data/test_hogares.zip")
+test_personas_original <- read_csv("data/test_personas.zip")
+test_hogares_original <- read_csv("data/test_hogares.zip")
 
 ### ¿Qué variables faltan? 
   #hogares train vs test: para conocer qué variables faltan en test
-comparedf(train_hogares, test_hogares)
-hogarescompar <- summary(comparedf(train_hogares, test_hogares))
+comparedf(train_hogares_original, test_hogares_original)
+hogarescompar <- summary(comparedf(train_hogares_original, test_hogares_original))
 print(hogarescompar)
 
   #personas train vs test: para conocer qué variables faltan en test y si todas las observaciones de test están en el train set
-comparedf(test_personas, train_personas)
-personascompar <- summary(comparedf(test_personas, train_personas))  
+comparedf(test_personas_original, train_personas_original)
+personascompar <- summary(comparedf(test_personas_original, train_personas_original))  
 print(personascompar)
 
-dim(test_personas) #sí están todas las observaciones de test en train
-dim(test_hogares) #sí están todas las observaciones de test en train
-
-test_personas$test = 1 #binaria para reconocer qué observaciones pertenecen al test set
-test_hogares$test = 1
-train_personas$test = 0 #binaria para reconocer qué observaciones pertenecen al test set
-train_hogares$test = 0
-
-# Obtenemos las variables que faltan para los sets de test tanto para personas como hogares
-test_personas1 <- left_join(test_personas, train_personas) # obtenemos todas las variables para las personas del test set
-dim(test_personas1)
-dim(test_personas)
-
-test_hogares1 <- left_join(test_hogares, train_hogares) # obtenemos todas las variables para los hogares del test set
-dim(test_hogares1)
-dim(test_hogares)
-
-#Creamos las nuevas col pero estas no tienen info
+### CREANDO LAS BASES CON LAS QUE TRABAJAREMOS 
 library(skimr)
-skim(test_personas1)
-skim(test_personas)
 
+## Dejar las de hogares con las variables que queremos 
+train_hogares <- subset(train_hogares_original, select = c(id, Clase, P5000, P5010, P5090, P5130, P5140, Nper, Npersug, Li, Lp, Depto, Ingtotug, Pobre, Npobres))
+test_hogares <- subset(test_hogares_original, select = c(id, Clase, P5000, P5010, P5090, P5130, P5140, Nper, Npersug, Li, Lp, Depto))
 
-#### UNIR BASES SEGÚN ID 
+## Dejar las de personas con las variables que queremos
+train_personas <- subset (train_personas_original, select = c(id, Orden, Clase, Ingtot, P6210,P6430,P6240, P6585s1, P6585s3, P6920, P7505, P7510s3, P6100, Des, Oc))
+test_personas <- subset(test_personas_original, select = c(id, Orden, Clase, P6210,P6430,P6240, P6585s1, P6585s3, P6920, P7505, P7510s3, P6100, Pet, Des, Oc))
 colnames(train_personas)
-colnames(train_hogares)
+#1. Creando variables
 
-## TRAIN
+#1.1 turn 2 en 0
+ifelse(train_personas$P6585s1 == 1, 1, 0)
+ifelse(train_personas$P6585s3 == 1, 1, 0)
+ifelse(train_personas$P7510s3 == 1, 1, 0)
+ifelse(train_personas$P7505   == 1, 1, 0)
+ifelse(train_personas$P6920   == 1, 1, 0)
 
-#1. Agrupar la variable que queremos pasar de una base a otra 
-sum_ingresos<-train_personas %>% group_by(id) %>% summarize(Ingtot_hogar=sum(Ingtot,na.rm = TRUE))  # It returns one row for each combination of grouping variables, borramos NA
-summary(sum_ingresos)
+      #vamos a agrupar las familias por sumas 
+sumP6585s1<-train_personas %>% group_by(id) %>% summarize(P6585s1h=sum(P6585s1,na.rm = TRUE))
+sumP6585s3<-train_personas %>% group_by(id) %>% summarize(P6585s3h=sum(P6585s3,na.rm = TRUE))
+sumP7510s3<-train_personas %>% group_by(id) %>% summarize(P7510s3h=sum(P7510s3,na.rm = TRUE))
+sumP7505  <-train_personas %>% group_by(id) %>% summarize(P7505h  =sum(P6585s1,na.rm = TRUE))
+sumP6920  <-train_personas %>% group_by(id) %>% summarize(P6920h  =sum(P6585s1,na.rm = TRUE))
 
-#2. Agregar la variable que agrupamos previamente
-train_hogares<-left_join(train_hogares,sum_ingresos)
-colnames(train_hogares)
+      #dividimos por personas en la casa para tener la proporción 
 
-skim(train_hogares)  #ingtothogar e ingtotug son similares más no iguales 
 
-##TEST
-colnames(test_personas)
-colnames(test_hogares)
 
-#mo tenemos variables de ingreso... 
+#1.2 con más de 2 categorías 
+
 
