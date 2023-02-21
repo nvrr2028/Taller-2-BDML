@@ -288,7 +288,7 @@ test_hogares$prop_especial                     <- test_hogares$especial / test_h
 test_hogares$prop_ningunoeduc                  <- test_hogares$ningunoeduc   / test_hogares$Orden
 test_hogares$prop_preescolar                   <- test_hogares$preescolar   / test_hogares$Orden
 test_hogares$prop_basicaprimaria               <- test_hogares$basicaprimaria     / test_hogares$Orden
-test_hogares$prop_basicasecundaria             <- test_hogares$_basicasecundaria      / test_hogares$Orden
+test_hogares$prop_basicasecundaria             <- test_hogares$basicasecundaria      / test_hogares$Orden
 test_hogares$prop_media                        <- test_hogares$media   / test_hogares$Orden
 test_hogares$prop_superior                     <- test_hogares$superior   / test_hogares$Orden
 test_hogares$prop_mayoriatiempotrabajo         <- test_hogares$mayoriatiempo   / test_hogares$Orden
