@@ -56,23 +56,11 @@ ifelse(train_personas$P6920   == 1, 1, 0)
 ifelse(train_personas$Des     == 1, 1, 0)
 ifelse(train_personas$Oc      == 1, 1, 0)
 
-ifelse(test_personas$P6585s1 == 1, 1, 0)
-ifelse(test_personas$P6585s3 == 1, 1, 0)
-ifelse(test_personas$P7510s3 == 1, 1, 0)
-ifelse(test_personas$P7505   == 1, 1, 0)
-ifelse(test_personas$P6920   == 1, 1, 0)
-ifelse(test_personas$Des     == 1, 1, 0)
-ifelse(test_personas$Oc      == 1, 1, 0)
-
 #1.2 con más de 2 categorías 
 ##P6100 ¿A cual de los siguientes regímenes de seguridad social en salud está afiliado:
 train_personas$subsidiado   <- ifelse(train_personas$P6100 == 3, 1, 0)
 train_personas$contributivo <- ifelse(train_personas$P6100 == 1, 1, 0)
 train_personas$especial     <- ifelse(train_personas$P6100 == 2, 1, 0)
-
-test_personas$subsidiado    <- ifelse(test_personas$P6100 == 3, 1, 0)
-test_personas$contributivo  <- ifelse(test_personas$P6100 == 1, 1, 0)
-test_personas$especial      <- ifelse(test_personas$P6100 == 2, 1, 0)
 #se excluye no informa
 
 ##P6210 ¿Cuál es el nivel educativo más alto alcanzado por .... y el último año o grado aprobado en este nivel? 
@@ -82,13 +70,6 @@ train_personas$basicaprimaria         <- ifelse(train_personas$P6210 == 3, 1, 0)
 train_personas$basicasecundaria <- ifelse(train_personas$P6210 == 4, 1, 0)
 train_personas$media            <- ifelse(train_personas$P6210 == 5, 1, 0)
 train_personas$superior         <- ifelse(train_personas$P6210 == 6, 1, 0)
-
-test_personas$ningunoeduc       <- ifelse(test_personas$P6210 == 1, 1, 0)
-test_personas$preescolar  <- ifelse(test_personas$P6210 == 2, 1, 0)
-test_personas$basicaprimaria          <- ifelse(test_personas$P6210 == 3, 1, 0)
-test_personas$basicasecundaria  <- ifelse(test_personas$P6210 == 4, 1, 0)
-test_personas$media             <- ifelse(test_personas$P6210 == 5, 1, 0)
-test_personas$superior          <- ifelse(test_personas$P6210 == 6, 1, 0)
 #se excluye no informa
 
 ##P6240 ¿En que actividad ocupó...... la mayor parte del tiempo la semana pasada?
@@ -97,12 +78,6 @@ train_personas$mayoriatiempobuscandotrabajo       <- ifelse(train_personas$P6240
 train_personas$mayoriatiempoestudiando            <- ifelse(train_personas$P6240 == 3, 1, 0)
 train_personas$mayoriatiempooficiohogar           <- ifelse(train_personas$P6240 == 4, 1, 0)
 train_personas$mayoriatiempoincapacitado          <- ifelse(train_personas$P6240 == 4, 1, 0)
-
-test_personas$mayoriatiempotrabajo                 <- ifelse(test_personas$P6240 == 1, 1, 0)
-test_personas$mayoriatiempobuscandotrabajo         <- ifelse(test_personas$P6240 == 2, 1, 0)
-test_personas$mayoriatiempoestudiando              <- ifelse(test_personas$P6240 == 3, 1, 0)
-test_personas$mayoriatiempooficiohogar             <- ifelse(test_personas$P6240 == 4, 1, 0)
-test_personas$mayoriatiempoincapacitado            <- ifelse(test_personas$P6240 == 5, 1, 0)
 #se excluye otra actividad
 
 ##P6430 En este trabajo es …. (posición ocupacional primera actividad)
@@ -113,14 +88,6 @@ train_personas$trabajadorcuentapropia    <- ifelse(train_personas$P6430 == 4, 1,
 train_personas$patronempleador           <- ifelse(train_personas$P6430 == 5, 1, 0)
 train_personas$trabajadorsinremunfamilia <- ifelse(train_personas$P6430 == 6, 1, 0)
 train_personas$trabajadorsinremunempresa <- ifelse(train_personas$P6430 == 7, 1, 0)
-
-test_personas$obreroemplempresa          <- ifelse(test_personas$P6430 == 1, 1, 0)
-test_personas$obreroemplgobierno         <- ifelse(test_personas$P6430 == 2, 1, 0)
-test_personas$empldomestico              <- ifelse(test_personas$P6430 == 3, 1, 0)
-test_personas$trabajadorcuentapropia     <- ifelse(test_personas$P6430 == 4, 1, 0)
-test_personas$patronempleador            <- ifelse(test_personas$P6430 == 5, 1, 0)
-test_personas$trabajadorsinremunfamilia  <- ifelse(test_personas$P6430 == 6, 1, 0)
-test_personas$trabajadorsinremunempresa  <- ifelse(test_personas$P6430 == 7, 1, 0)
 #se excluye otro
 
       #vamos a agrupar las familias por sumas 
