@@ -140,7 +140,7 @@ train_hogares$prop_especial                     <- train_hogares$especial / trai
 train_hogares$prop_ningunoeduc                  <- train_hogares$ningunoeduc   / train_hogares$Orden
 train_hogares$prop_preescolar                   <- train_hogares$preescolar   / train_hogares$Orden
 train_hogares$prop_basicaprimaria               <- train_hogares$basicaprimaria     / train_hogares$Orden
-train_hogares$prop_basicasecundaria             <- train_hogares$_basicasecundaria      / train_hogares$Orden
+train_hogares$prop_basicasecundaria             <- train_hogares$basicasecundaria      / train_hogares$Orden
 train_hogares$prop_media                        <- train_hogares$media   / train_hogares$Orden
 train_hogares$prop_superior                     <- train_hogares$superior   / train_hogares$Orden
 train_hogares$prop_mayoriatiempotrabajo         <- train_hogares$mayoriatiempo   / train_hogares$Orden
