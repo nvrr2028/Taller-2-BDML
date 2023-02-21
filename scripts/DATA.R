@@ -15,12 +15,12 @@ rm(list = ls(all.names = TRUE))
 library(pacman)
 p_load("readr","tidyverse", "dplyr", "arsenal")
 
-train_personas_original <- read_csv("data/train_personas.zip")
-train_hogares_original <- read_csv("data/train_hogares.zip")
+train_personas_original <- read_csv("stores/train_personas.zip")
+train_hogares_original <- read_csv("stores/train_hogares.zip")
 
   #2. Test
-test_personas_original <- read_csv("data/test_personas.zip")
-test_hogares_original <- read_csv("data/test_hogares.zip")
+test_personas_original <- read_csv("stores/test_personas.zip")
+test_hogares_original <- read_csv("stores/test_hogares.zip")
 
 ### ¿Qué variables faltan? 
   #hogares train vs test: para conocer qué variables faltan en test
