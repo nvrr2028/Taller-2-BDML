@@ -1,5 +1,5 @@
 #**************************************************************************************#
-#                                    TALLER 1 BDML                                     #
+#                                    TALLER 2 BDML                                     #
 #                        Uniandes: Sofia Charry Tobar                                  #
 #                                  Laura Manuela Rodríguez Morales                     #
 #                                  Nicol Valeria Rodríguez Rodríguez                   #
