@@ -10,11 +10,27 @@
 # Limpiar el espacio
 rm(list = ls(all.names = TRUE))
 
-###  cargamos las bases 
-  #1. Train
-library(pacman)
-p_load("readr","tidyverse", "dplyr", "arsenal")
+# ------------------------------------------------------------------------------------ #
+# Cargar librerias.
+# ------------------------------------------------------------------------------------ #
 
+list.of.packages = c("pacman", "readr","tidyverse", "dplyr", "arsenal", "fastDummies", 
+                     "caret", "glmnet", "MLmetrics")
+
+new.packages = list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+sapply(list.of.packages, require, character.only = TRUE)
+
+# ------------------------------------------------------------------------------------ #
+# 1. Descripción del problema
+# ------------------------------------------------------------------------------------ #
+
+# ------------------------------------------------------------------------------------ #
+# 2. Data
+# ------------------------------------------------------------------------------------ #
+
+###  2.1 Cargamos las bases 
+  #1. Train
 train_personas_original <- read_csv("C:/Users/lmrod/OneDrive/Documentos/GitHub/Taller-2-BDML/data/train_personas.zip")
 train_hogares_original <- read_csv("C:/Users/lmrod/OneDrive/Documentos/GitHub/Taller-2-BDML/stores/train_hogares.zip")
 
@@ -22,7 +38,7 @@ train_hogares_original <- read_csv("C:/Users/lmrod/OneDrive/Documentos/GitHub/Ta
 test_personas_original <- read_csv("C:/Users/lmrod/OneDrive/Documentos/GitHub/Taller-2-BDML/data/test_personas.zip")
 test_hogares_original <- read_csv("C:/Users/lmrod/OneDrive/Documentos/GitHub/Taller-2-BDML/data/test_hogares.zip")
 
-### ¿Qué variables faltan? 
+### 2.2 ¿Qué variables faltan? 
   #hogares train vs test: para conocer qué variables faltan en test
 comparedf(train_hogares_original, test_hogares_original)
 hogarescompar <- summary(comparedf(train_hogares_original, test_hogares_original))
@@ -33,7 +49,7 @@ comparedf(test_personas_original, train_personas_original)
 personascompar <- summary(comparedf(test_personas_original, train_personas_original))  
 print(personascompar)
 
-### CREANDO LAS BASES CON LAS QUE TRABAJAREMOS 
+### 2.3 CREANDO LAS BASES CON LAS QUE TRABAJAREMOS 
 library(skimr)
 
 ## Dejar las de hogares con las variables que queremos 
@@ -44,7 +60,7 @@ test_hogares <- subset(test_hogares_original, select = c(id, Clase, P5000, P5010
 train_personas <- subset (train_personas_original, select = c(id, Orden, Clase, Ingtot, P6210,P6430,P6240, P6585s1, P6585s3, P6920, P7505, P7510s3, P6100, Des, Oc))
 test_personas <- subset(test_personas_original, select = c(id, Orden, Clase, P6210,P6430,P6240, P6585s1, P6585s3, P6920, P7505, P7510s3, P6100, Des, Oc))
 
-#PARA TRAIN --------------------------------------------------------------------------------------
+# PARA TRAIN --------------------------------------------------------------------------------------
 #1. Creando variables
 
 #1.1 convertimos los valores de 2 en 0 para las variables binarias
@@ -159,6 +175,7 @@ train_hogares$prop_trabajadorsinremunempresa    <- train_hogares$trabajadorsinre
 colnames(train_hogares)
 
 #PARA TEST------------------------------------------------------------------------------
+
 #1. Creando variables
 
 #1.1 convertimos los valores de 2 en 0 para las variables binarias
