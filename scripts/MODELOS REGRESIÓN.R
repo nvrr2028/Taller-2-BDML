@@ -10,12 +10,15 @@
 # Limpiar el espacio
 rm(list = ls(all.names = TRUE))
 
+# Directorio de trabajo (cambiar según computador)
+setwd("C:/Users/nicol/Documents/GitHub/Repositorios/Taller-2-BDML")
+
 # ------------------------------------------------------------------------------------ #
 # Cargar librerias.
 # ------------------------------------------------------------------------------------ #
 
 list.of.packages = c("pacman", "readr","tidyverse", "dplyr", "arsenal", "fastDummies", 
-                     "caret", "glmnet", "MLmetrics")
+                     "caret", "glmnet", "MLmetrics", "skimr")
 
 new.packages = list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -31,12 +34,12 @@ sapply(list.of.packages, require, character.only = TRUE)
 
 ###  2.1 Cargamos las bases 
 #1. Train
-train_personas_original <- read_csv("C:/Users/lmrod/OneDrive/Documentos/GitHub/Taller-2-BDML/data/train_personas.zip")
-train_hogares_original <- read_csv("C:/Users/lmrod/OneDrive/Documentos/GitHub/Taller-2-BDML/stores/train_hogares.zip")
+train_personas_original <- read_csv("./data/train_personas.zip")
+train_hogares_original <- read_csv("./data/train_hogares.zip")
 
 #2. Test
-test_personas_original <- read_csv("C:/Users/lmrod/OneDrive/Documentos/GitHub/Taller-2-BDML/data/test_personas.zip")
-test_hogares_original <- read_csv("C:/Users/lmrod/OneDrive/Documentos/GitHub/Taller-2-BDML/data/test_hogares.zip")
+test_personas_original <- read_csv("./data/test_personas.zip")
+test_hogares_original <- read_csv("./data/test_hogares.zip")
 
 ### 2.2 ¿Qué variables faltan? 
 #hogares train vs test: para conocer qué variables faltan en test
@@ -294,22 +297,19 @@ test_hogares$prop_trabajadorsinremunempresa    <- test_hogares$trabajadorsinremu
 
 seed(11111)
 
-# Modelo grande
+# 3.1 Modelo benchmark: regresión lineal
 lm()
 
 
-# Lasso - Laura
+# 3.2 Lasso
 
 
 
-# Elastic net - Nicol
+# 3.3 Elastic net
 
 
 
-# 
+# 3.4 Por verse
 
-
-
-#### Variables
 
 
