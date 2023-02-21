@@ -77,15 +77,15 @@ test_personas$especial      <- ifelse(test_personas$P6100 == 2, 1, 0)
 
 ##P6210 ¿Cuál es el nivel educativo más alto alcanzado por .... y el último año o grado aprobado en este nivel? 
 train_personas$ningunoeduc      <- ifelse(train_personas$P6210 == 1, 1, 0)
-train_personas$basicapreescolar <- ifelse(train_personas$P6210 == 2, 1, 0)
-train_personas$primaria         <- ifelse(train_personas$P6210 == 3, 1, 0)
+train_personas$preescolar <- ifelse(train_personas$P6210 == 2, 1, 0)
+train_personas$basicaprimaria         <- ifelse(train_personas$P6210 == 3, 1, 0)
 train_personas$basicasecundaria <- ifelse(train_personas$P6210 == 4, 1, 0)
 train_personas$media            <- ifelse(train_personas$P6210 == 5, 1, 0)
 train_personas$superior         <- ifelse(train_personas$P6210 == 6, 1, 0)
 
 test_personas$ningunoeduc       <- ifelse(test_personas$P6210 == 1, 1, 0)
-test_personas$basicapreescolar  <- ifelse(test_personas$P6210 == 2, 1, 0)
-test_personas$primaria          <- ifelse(test_personas$P6210 == 3, 1, 0)
+test_personas$preescolar  <- ifelse(test_personas$P6210 == 2, 1, 0)
+test_personas$basicaprimaria          <- ifelse(test_personas$P6210 == 3, 1, 0)
 test_personas$basicasecundaria  <- ifelse(test_personas$P6210 == 4, 1, 0)
 test_personas$media             <- ifelse(test_personas$P6210 == 5, 1, 0)
 test_personas$superior          <- ifelse(test_personas$P6210 == 6, 1, 0)
@@ -104,7 +104,6 @@ test_personas$mayoriatiempoestudiando              <- ifelse(test_personas$P6240
 test_personas$mayoriatiempooficiohogar             <- ifelse(test_personas$P6240 == 4, 1, 0)
 test_personas$mayoriatiempoincapacitado            <- ifelse(test_personas$P6240 == 5, 1, 0)
 #se excluye otra actividad
-train_personas$P6430
 
 ##P6430 En este trabajo es …. (posición ocupacional primera actividad)
 train_personas$obreroemplempresa         <- ifelse(train_personas$P6430 == 1, 1, 0)
@@ -134,9 +133,31 @@ sumDes    <-train_personas %>% group_by(id) %>% reframe(Desh    =sum(Des,na.rm =
 sumOc     <-train_personas %>% group_by(id) %>% reframe(Och     =sum(Oc,na.rm = TRUE))
 orden     <-train_personas %>% group_by(id) %>% reframe(Orden   =sum(Orden,na.rm = TRUE))
 
+sumsubsidiado                   <-train_personas %>% group_by(id) %>% reframe(subsidiado=sum(subsidiado,na.rm = TRUE))
+sumcontributivo                 <-train_personas %>% group_by(id) %>% reframe(contributivo=sum(contributivo,na.rm = TRUE))
+sumespecial                     <-train_personas %>% group_by(id) %>% reframe(especial=sum(especial,na.rm = TRUE))
+sumningunoeduc                  <-train_personas %>% group_by(id) %>% reframe(ningunoeduc =sum(ningunoeduc ,na.rm = TRUE))
+sumpreescolar                   <-train_personas %>% group_by(id) %>% reframe(preescolar=sum(preescolar,na.rm = TRUE))
+sumbasicaprimaria               <-train_personas %>% group_by(id) %>% reframe(basicaprimaria=sum(basicaprimaria,na.rm = TRUE))
+sumbasicasecundaria             <-train_personas %>% group_by(id) %>% reframe(basicasecundaria=sum(basicasecundaria,na.rm = TRUE))
+summedia                        <-train_personas %>% group_by(id) %>% reframe(media=sum(media,na.rm = TRUE))
+sumsuperior                     <-train_personas %>% group_by(id) %>% reframe(superior=sum(superior,na.rm = TRUE))
+summayoriatiempotrabajo         <-train_personas %>% group_by(id) %>% reframe(mayoriatiempotrabajo=sum(mayoriatiempotrabajo,na.rm = TRUE))
+summayoriatiempobuscandotrabajo <-train_personas %>% group_by(id) %>% reframe(mayoriatiempobuscandotrabajo=sum(mayoriatiempobuscandotrabajo,na.rm = TRUE))
+summayoriatiempoestudiando      <-train_personas %>% group_by(id) %>% reframe(mayoriatiempoestudiando=sum(mayoriatiempoestudiando,na.rm = TRUE))
+summayoriatiempooficiohogar     <-train_personas %>% group_by(id) %>% reframe(mayoriatiempooficiohogar=sum(mayoriatiempooficiohogar,na.rm = TRUE))
+summayoriatiempoincapacitado    <-train_personas %>% group_by(id) %>% reframe(mayoriatiempoincapacitado=sum(mayoriatiempoincapacitado,na.rm = TRUE))
+sumobreroemplempresa            <-train_personas %>% group_by(id) %>% reframe(obreroemplempresa=sum(obreroemplempresa,na.rm = TRUE))
+sumobreroemplgobierno           <-train_personas %>% group_by(id) %>% reframe(obreroemplgobierno=sum(obreroemplgobierno,na.rm = TRUE))
+sumempldomestico                <-train_personas %>% group_by(id) %>% reframe(empldomestico=sum(empldomestico,na.rm = TRUE))
+sumtrabajadorcuentapropia       <-train_personas %>% group_by(id) %>% reframe(trabajadorcuentapropia=sum(trabajadorcuentapropia,na.rm = TRUE))
+sumpatronempleador              <-train_personas %>% group_by(id) %>% reframe(patronempleador=sum(patronempleador,na.rm = TRUE))
+sumtrabajadorsinremunfamilia    <-train_personas %>% group_by(id) %>% reframe(trabajadorsinremunfamilia=sum(trabajadorsinremunfamilia,na.rm = TRUE))
+sumtrabajadorsinremunempresa    <-train_personas %>% group_by(id) %>% reframe(trabajadorsinremunempresa=sum(trabajadorsinremunempresa,na.rm = TRUE))
+
 #y las pegamos a la base de hogares 
 library(plyr)
-train_hogares<-join_all(list(train_personas, orden, sumP6585s3, sumP6585s1, sumP7510s3, sumP7505, sumP6920, sumDes, sumOc), by= 'id', type= 'left')
+train_hogares<-join_all(list(train_personas, orden, sumP6585s3, sumP6585s1, sumP7510s3, sumP7505, sumP6920, sumDes, sumOc, sumsubsidiado, sumcontributivo, sumespecial, sumningunoeduc, sumpreescolar, sumbasicaprimaria, sumbasicasecundaria, summedia, sumsuperior, summayoriatiempoincapacitado, summayoriatiempooficiohogar, summayoriatiempoestudiando, summayoriatiempobuscandotrabajo, summayoriatiempotrabajo, sumobreroemplgobierno, sumobreroemplempresa, sumempldomestico, sumtrabajadorcuentapropia, sumpatronempleador, sumtrabajadorsinremunempresa, sumtrabajadorsinremunfamilia), by= 'id', type= 'left')
 
 #dividimos por personas en la casa para tener la proporción 
 train_hogares$prop_P6585s1h <- train_hogares$P6585s1h / train_hogares$Orden
@@ -146,13 +167,34 @@ train_hogares$prop_P7505h   <- train_hogares$P7505h   / train_hogares$Orden
 train_hogares$prop_P6920h   <- train_hogares$P6920h   / train_hogares$Orden
 train_hogares$prop_Desh     <- train_hogares$Desh     / train_hogares$Orden
 train_hogares$prop_Och      <- train_hogares$Och      / train_hogares$Orden
+train_hogares$prop_subsidiado                   <- train_hogares$subsidiado / train_hogares$Orden
+train_hogares$prop_contributivo                 <- train_hogares$contributivo / train_hogares$Orden
+train_hogares$prop_especial                     <- train_hogares$especial / train_hogares$Orden
+train_hogares$prop_ningunoeduc                  <- train_hogares$ningunoeduc   / train_hogares$Orden
+train_hogares$prop_preescolar                   <- train_hogares$preescolar   / train_hogares$Orden
+train_hogares$prop_basicaprimaria               <- train_hogares$basicaprimaria     / train_hogares$Orden
+train_hogares$prop_basicasecundaria             <- train_hogares$_basicasecundaria      / train_hogares$Orden
+train_hogares$prop_media                        <- train_hogares$media   / train_hogares$Orden
+train_hogares$prop_superior                     <- train_hogares$superior   / train_hogares$Orden
+train_hogares$prop_mayoriatiempotrabajo         <- train_hogares$mayoriatiempo   / train_hogares$Orden
+train_hogares$prop_mayoriatiempobuscandotrabajo <- train_hogares$mayoriatiempobuscandotrabajo / train_hogares$Orden
+train_hogares$prop_mayoriatiempoestudiando      <- train_hogares$mayoriatiempoestudiando / train_hogares$Orden
+train_hogares$prop_mayoriatiempooficiohogar     <- train_hogares$mayoriatiempooficiohogar / train_hogares$Orden
+train_hogares$prop_mayoriatiempoincapacitado    <- train_hogares$mayoriatiempoincapacitado / train_hogares$Orden
+train_hogares$prop_obreroemplempres             <- train_hogares$obreroemplempres / train_hogares$Orden
+train_hogares$prop_obreroemplgobierno           <- train_hogares$obreroemplgobierno / train_hogares$Orden
+train_hogares$prop_empldomestico                <- train_hogares$empldomestico / train_hogares$Orden
+train_hogares$prop_trabajadorcuentapropia       <- train_hogares$trabajadorcuentapropia / train_hogares$Orden
+train_hogares$prop_patronempleador              <- train_hogares$patronempleador / train_hogares$Orden
+train_hogares$prop_trabajadorsinremunfamilia    <- train_hogares$trabajadorsinremunfamilia / train_hogares$Orden
+train_hogares$prop_trabajadorsinremunempresa    <- train_hogares$trabajadorsinremunempresa / train_hogares$Orden
 
 colnames(train_hogares)
 
 #PARA TEST------------------------------------------------------------------------------
 #1. Creando variables
 
-#1.1 turn 2 en 0
+#1.1 convertimos los valores de 2 en 0 para las variables binarias
 ifelse(test_personas$P6585s1 == 1, 1, 0)
 ifelse(test_personas$P6585s3 == 1, 1, 0)
 ifelse(test_personas$P7510s3 == 1, 1, 0)
@@ -160,11 +202,40 @@ ifelse(test_personas$P7505   == 1, 1, 0)
 ifelse(test_personas$P6920   == 1, 1, 0)
 ifelse(test_personas$Des     == 1, 1, 0)
 ifelse(test_personas$Oc      == 1, 1, 0)
+
 #1.2 con más de 2 categorías 
+##P6100 ¿A cual de los siguientes regímenes de seguridad social en salud está afiliado:
+test_personas$subsidiado    <- ifelse(test_personas$P6100 == 3, 1, 0)
+test_personas$contributivo  <- ifelse(test_personas$P6100 == 1, 1, 0)
+test_personas$especial      <- ifelse(test_personas$P6100 == 2, 1, 0)
+#se excluye no informa
 
+##P6210 ¿Cuál es el nivel educativo más alto alcanzado por .... y el último año o grado aprobado en este nivel? 
+test_personas$ningunoeduc       <- ifelse(test_personas$P6210 == 1, 1, 0)
+test_personas$preescolar  <- ifelse(test_personas$P6210 == 2, 1, 0)
+test_personas$basicaprimaria          <- ifelse(test_personas$P6210 == 3, 1, 0)
+test_personas$basicasecundaria  <- ifelse(test_personas$P6210 == 4, 1, 0)
+test_personas$media             <- ifelse(test_personas$P6210 == 5, 1, 0)
+test_personas$superior          <- ifelse(test_personas$P6210 == 6, 1, 0)
+#se excluye no informa
 
+##P6240 ¿En que actividad ocupó...... la mayor parte del tiempo la semana pasada?
+test_personas$mayoriatiempotrabajo                 <- ifelse(test_personas$P6240 == 1, 1, 0)
+test_personas$mayoriatiempobuscandotrabajo         <- ifelse(test_personas$P6240 == 2, 1, 0)
+test_personas$mayoriatiempoestudiando              <- ifelse(test_personas$P6240 == 3, 1, 0)
+test_personas$mayoriatiempooficiohogar             <- ifelse(test_personas$P6240 == 4, 1, 0)
+test_personas$mayoriatiempoincapacitado            <- ifelse(test_personas$P6240 == 5, 1, 0)
+#se excluye otra actividad
 
-
+##P6430 En este trabajo es …. (posición ocupacional primera actividad)
+test_personas$obreroemplempresa          <- ifelse(test_personas$P6430 == 1, 1, 0)
+test_personas$obreroemplgobierno         <- ifelse(test_personas$P6430 == 2, 1, 0)
+test_personas$empldomestico              <- ifelse(test_personas$P6430 == 3, 1, 0)
+test_personas$trabajadorcuentapropia     <- ifelse(test_personas$P6430 == 4, 1, 0)
+test_personas$patronempleador            <- ifelse(test_personas$P6430 == 5, 1, 0)
+test_personas$trabajadorsinremunfamilia  <- ifelse(test_personas$P6430 == 6, 1, 0)
+test_personas$trabajadorsinremunempresa  <- ifelse(test_personas$P6430 == 7, 1, 0)
+#se excluye otro
 
         #vamos a agrupar las familias por sumas 
 sumP6585s1<-test_personas %>% group_by(id) %>% reframe(P6585s1h=sum(P6585s1,na.rm = TRUE))
@@ -175,8 +246,61 @@ sumP6920  <-test_personas %>% group_by(id) %>% reframe(P6920h  =sum(P6585s1,na.r
 sumDes    <-test_personas %>% group_by(id) %>% reframe(Desh    =sum(Des,na.rm = TRUE))
 sumOc     <-test_personas %>% group_by(id) %>% reframe(Och     =sum(Oc,na.rm = TRUE))
 
+sumsubsidiado                   <-test_personas %>% group_by(id) %>% reframe(subsidiado=sum(subsidiado,na.rm = TRUE))
+sumcontributivo                 <-test_personas %>% group_by(id) %>% reframe(contributivo=sum(contributivo,na.rm = TRUE))
+sumespecial                     <-test_personas %>% group_by(id) %>% reframe(especial=sum(especial,na.rm = TRUE))
+sumningunoeduc                  <-test_personas %>% group_by(id) %>% reframe(ningunoeduc =sum(ningunoeduc ,na.rm = TRUE))
+sumpreescolar                   <-test_personas %>% group_by(id) %>% reframe(preescolar=sum(preescolar,na.rm = TRUE))
+sumbasicaprimaria               <-test_personas %>% group_by(id) %>% reframe(basicaprimaria=sum(basicaprimaria,na.rm = TRUE))
+sumbasicasecundaria             <-test_personas %>% group_by(id) %>% reframe(basicasecundaria=sum(basicasecundaria,na.rm = TRUE))
+summedia                        <-test_personas %>% group_by(id) %>% reframe(media=sum(media,na.rm = TRUE))
+sumsuperior                     <-test_personas %>% group_by(id) %>% reframe(superior=sum(superior,na.rm = TRUE))
+summayoriatiempotrabajo         <-test_personas %>% group_by(id) %>% reframe(mayoriatiempotrabajo=sum(mayoriatiempotrabajo,na.rm = TRUE))
+summayoriatiempobuscandotrabajo <-test_personas %>% group_by(id) %>% reframe(mayoriatiempobuscandotrabajo=sum(mayoriatiempobuscandotrabajo,na.rm = TRUE))
+summayoriatiempoestudiando      <-test_personas %>% group_by(id) %>% reframe(mayoriatiempoestudiando=sum(mayoriatiempoestudiando,na.rm = TRUE))
+summayoriatiempooficiohogar     <-test_personas %>% group_by(id) %>% reframe(mayoriatiempooficiohogar=sum(mayoriatiempooficiohogar,na.rm = TRUE))
+summayoriatiempoincapacitado    <-test_personas %>% group_by(id) %>% reframe(mayoriatiempoincapacitado=sum(mayoriatiempoincapacitado,na.rm = TRUE))
+sumobreroemplempresa            <-test_personas %>% group_by(id) %>% reframe(obreroemplempresa=sum(obreroemplempresa,na.rm = TRUE))
+sumobreroemplgobierno           <-test_personas %>% group_by(id) %>% reframe(obreroemplgobierno=sum(obreroemplgobierno,na.rm = TRUE))
+sumempldomestico                <-test_personas %>% group_by(id) %>% reframe(empldomestico=sum(empldomestico,na.rm = TRUE))
+sumtrabajadorcuentapropia       <-test_personas %>% group_by(id) %>% reframe(trabajadorcuentapropia=sum(trabajadorcuentapropia,na.rm = TRUE))
+sumpatronempleador              <-test_personas %>% group_by(id) %>% reframe(patronempleador=sum(patronempleador,na.rm = TRUE))
+sumtrabajadorsinremunfamilia    <-test_personas %>% group_by(id) %>% reframe(trabajadorsinremunfamilia=sum(trabajadorsinremunfamilia,na.rm = TRUE))
+sumtrabajadorsinremunempresa    <-test_personas %>% group_by(id) %>% reframe(trabajadorsinremunempresa=sum(trabajadorsinremunempresa,na.rm = TRUE))
+
+
         #y las pegamos a la base de hogares 
-test_hogares<-join_all(list(test_hogares,sumP6585s3, sumP6585s1, sumP7510s3, sumP7505, sumP6920, sumDes, sumOc), by= 'id', type= 'left')
+test_hogares<-join_all(list(test_hogares,sumP6585s3, sumP6585s1, sumP7510s3, sumP7505, sumP6920, sumDes, sumOc, sumsubsidiado, sumcontributivo, sumespecial, sumningunoeduc, sumpreescolar, sumbasicaprimaria, sumbasicasecundaria, summedia, sumsuperior, summayoriatiempoincapacitado, summayoriatiempooficiohogar, summayoriatiempoestudiando, summayoriatiempobuscandotrabajo, summayoriatiempotrabajo, sumobreroemplgobierno, sumobreroemplempresa, sumempldomestico, sumtrabajadorcuentapropia, sumpatronempleador, sumtrabajadorsinremunempresa, sumtrabajadorsinremunfamilia), by= 'id', type= 'left')
 colnames(test_hogares)
 
 #dividimos por personas en la casa para tener la proporción 
+test_hogares$prop_P6585s1h <- test_hogares$P6585s1h / test_hogares$Orden
+test_hogares$prop_P6585s3h <- test_hogares$P6585s3h / test_hogares$Orden
+test_hogares$prop_P7510s3h <- test_hogares$P7510s3h / test_hogares$Orden
+test_hogares$prop_P7505h   <- test_hogares$P7505h   / test_hogares$Orden
+test_hogares$prop_P6920h   <- test_hogares$P6920h   / test_hogares$Orden
+test_hogares$prop_Desh     <- test_hogares$Desh     / test_hogares$Orden
+test_hogares$prop_Och      <- test_hogares$Och      / train_hogares$Orden
+
+test_hogares$prop_subsidiado                   <- test_hogares$subsidiado / test_hogares$Orden
+test_hogares$prop_contributivo                 <- test_hogares$contributivo / test_hogares$Orden
+test_hogares$prop_especial                     <- test_hogares$especial / test_hogares$Orden
+test_hogares$prop_ningunoeduc                  <- test_hogares$ningunoeduc   / test_hogares$Orden
+test_hogares$prop_preescolar                   <- test_hogares$preescolar   / test_hogares$Orden
+test_hogares$prop_basicaprimaria               <- test_hogares$basicaprimaria     / test_hogares$Orden
+test_hogares$prop_basicasecundaria             <- test_hogares$_basicasecundaria      / test_hogares$Orden
+test_hogares$prop_media                        <- test_hogares$media   / test_hogares$Orden
+test_hogares$prop_superior                     <- test_hogares$superior   / test_hogares$Orden
+test_hogares$prop_mayoriatiempotrabajo         <- test_hogares$mayoriatiempo   / test_hogares$Orden
+test_hogares$prop_mayoriatiempobuscandotrabajo <- test_hogares$mayoriatiempobuscandotrabajo / test_hogares$Orden
+test_hogares$prop_mayoriatiempoestudiando      <- test_hogares$mayoriatiempoestudiando / test_hogares$Orden
+test_hogares$prop_mayoriatiempooficiohogar     <- test_hogares$mayoriatiempooficiohogar / test_hogares$Orden
+test_hogares$prop_mayoriatiempoincapacitado    <- test_hogares$mayoriatiempoincapacitado / test_hogares$Orden
+test_hogares$prop_obreroemplempres             <- test_hogares$obreroemplempres / test_hogares$Orden
+test_hogares$prop_obreroemplgobierno           <- test_hogares$obreroemplgobierno / test_hogares$Orden
+test_hogares$prop_empldomestico                <- test_hogares$empldomestico / test_hogares$Orden
+test_hogares$prop_trabajadorcuentapropia       <- test_hogares$trabajadorcuentapropia / test_hogares$Orden
+test_hogares$prop_patronempleador              <- test_hogares$patronempleador / test_hogares$Orden
+test_hogares$prop_trabajadorsinremunfamilia    <- test_hogares$trabajadorsinremunfamilia / test_hogares$Orden
+test_hogares$prop_trabajadorsinremunempresa    <- test_hogares$trabajadorsinremunempresa / test_hogares$Orden
+
