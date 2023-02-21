@@ -53,7 +53,6 @@ personascompar <- summary(comparedf(test_personas_original, train_personas_origi
 print(personascompar)
 
 ### 2.3 CREANDO LAS BASES CON LAS QUE TRABAJAREMOS 
-library(skimr)
 
 ## Dejar las de hogares con las variables que queremos 
 train_hogares <- subset(train_hogares_original, select = c(id, Clase, P5000, P5010, P5090, P5130, P5140, Nper, Npersug, Li, Lp, Depto, Ingtotug, Pobre, Npobres))
@@ -67,13 +66,13 @@ test_personas <- subset(test_personas_original, select = c(id, Orden, Clase, P62
 #1. Creando variables
 
 #1.1 convertimos los valores de 2 en 0 para las variables binarias
-ifelse(train_personas$P6585s1 == 1, 1, 0)
-ifelse(train_personas$P6585s3 == 1, 1, 0)
-ifelse(train_personas$P7510s3 == 1, 1, 0)
-ifelse(train_personas$P7505   == 1, 1, 0)
-ifelse(train_personas$P6920   == 1, 1, 0)
-ifelse(train_personas$Des     == 1, 1, 0)
-ifelse(train_personas$Oc      == 1, 1, 0)
+train_personas$P6585s1 <- ifelse(train_personas$P6585s1 == 1, 1, 0)
+train_personas$P6585s3 <- ifelse(train_personas$P6585s3 == 1, 1, 0)
+train_personas$P7510s3 <- ifelse(train_personas$P7510s3 == 1, 1, 0)
+train_personas$P7505 <- ifelse(train_personas$P7505   == 1, 1, 0)
+train_personas$P6920 <- ifelse(train_personas$P6920   == 1, 1, 0)
+train_personas$Des <- ifelse(train_personas$Des     == 1, 1, 0)
+train_personas$Oc <- ifelse(train_personas$Oc      == 1, 1, 0)
 
 #1.2 con más de 2 categorías 
 ##P6100 ¿A cual de los siguientes regímenes de seguridad social en salud está afiliado:
@@ -109,7 +108,7 @@ train_personas$trabajadorsinremunfamilia <- ifelse(train_personas$P6430 == 6, 1,
 train_personas$trabajadorsinremunempresa <- ifelse(train_personas$P6430 == 7, 1, 0)
 #se excluye otro
 
-#vamos a agrupar las familias por sumas 
+#1.3 Vamos a agrupar las familias por sumas 
 sumP6585s1<-train_personas %>% group_by(id) %>% reframe(P6585s1h=sum(P6585s1,na.rm = TRUE))
 sumP6585s3<-train_personas %>% group_by(id) %>% reframe(P6585s3h=sum(P6585s3,na.rm = TRUE))
 sumP7510s3<-train_personas %>% group_by(id) %>% reframe(P7510s3h=sum(P7510s3,na.rm = TRUE))
@@ -141,8 +140,7 @@ sumpatronempleador              <-train_personas %>% group_by(id) %>% reframe(pa
 sumtrabajadorsinremunfamilia    <-train_personas %>% group_by(id) %>% reframe(trabajadorsinremunfamilia=sum(trabajadorsinremunfamilia,na.rm = TRUE))
 sumtrabajadorsinremunempresa    <-train_personas %>% group_by(id) %>% reframe(trabajadorsinremunempresa=sum(trabajadorsinremunempresa,na.rm = TRUE))
 
-#y las pegamos a la base de hogares 
-library(plyr)
+#Y las pegamos a la base de hogares 
 train_hogares<-join_all(list(train_personas, orden, sumP6585s3, sumP6585s1, sumP7510s3, sumP7505, sumP6920, sumDes, sumOc, sumsubsidiado, sumcontributivo, sumespecial, sumningunoeduc, sumpreescolar, sumbasicaprimaria, sumbasicasecundaria, summedia, sumsuperior, summayoriatiempoincapacitado, summayoriatiempooficiohogar, summayoriatiempoestudiando, summayoriatiempobuscandotrabajo, summayoriatiempotrabajo, sumobreroemplgobierno, sumobreroemplempresa, sumempldomestico, sumtrabajadorcuentapropia, sumpatronempleador, sumtrabajadorsinremunempresa, sumtrabajadorsinremunfamilia), by= 'id', type= 'left')
 
 #dividimos por personas en la casa para tener la proporción 
@@ -182,13 +180,13 @@ colnames(train_hogares)
 #1. Creando variables
 
 #1.1 convertimos los valores de 2 en 0 para las variables binarias
-ifelse(test_personas$P6585s1 == 1, 1, 0)
-ifelse(test_personas$P6585s3 == 1, 1, 0)
-ifelse(test_personas$P7510s3 == 1, 1, 0)
-ifelse(test_personas$P7505   == 1, 1, 0)
-ifelse(test_personas$P6920   == 1, 1, 0)
-ifelse(test_personas$Des     == 1, 1, 0)
-ifelse(test_personas$Oc      == 1, 1, 0)
+test_personas$P6585s1 <- ifelse(test_personas$P6585s1 == 1, 1, 0)
+test_personas$P6585s3 <- ifelse(test_personas$P6585s3 == 1, 1, 0)
+test_personas$P7510s3 <- ifelse(test_personas$P7510s3 == 1, 1, 0)
+test_personas$P7505 <- ifelse(test_personas$P7505   == 1, 1, 0)
+test_personas$P6920 <- ifelse(test_personas$P6920   == 1, 1, 0)
+test_personas$Des <- ifelse(test_personas$Des     == 1, 1, 0)
+test_personas$Oc <- ifelse(test_personas$Oc      == 1, 1, 0)
 
 #1.2 con más de 2 categorías 
 ##P6100 ¿A cual de los siguientes regímenes de seguridad social en salud está afiliado:
@@ -224,7 +222,7 @@ test_personas$trabajadorsinremunfamilia  <- ifelse(test_personas$P6430 == 6, 1, 
 test_personas$trabajadorsinremunempresa  <- ifelse(test_personas$P6430 == 7, 1, 0)
 #se excluye otro
 
-#vamos a agrupar las familias por sumas 
+#1.3 Vamos a agrupar las familias por sumas de acuerdo con las variables individuales
 sumP6585s1<-test_personas %>% group_by(id) %>% reframe(P6585s1h=sum(P6585s1,na.rm = TRUE))
 sumP6585s3<-test_personas %>% group_by(id) %>% reframe(P6585s3h=sum(P6585s3,na.rm = TRUE))
 sumP7510s3<-test_personas %>% group_by(id) %>% reframe(P7510s3h=sum(P7510s3,na.rm = TRUE))
@@ -255,12 +253,11 @@ sumpatronempleador              <-test_personas %>% group_by(id) %>% reframe(pat
 sumtrabajadorsinremunfamilia    <-test_personas %>% group_by(id) %>% reframe(trabajadorsinremunfamilia=sum(trabajadorsinremunfamilia,na.rm = TRUE))
 sumtrabajadorsinremunempresa    <-test_personas %>% group_by(id) %>% reframe(trabajadorsinremunempresa=sum(trabajadorsinremunempresa,na.rm = TRUE))
 
-
-#y las pegamos a la base de hogares 
+#Y las pegamos a la base de hogares 
 test_hogares<-join_all(list(test_hogares,sumP6585s3, sumP6585s1, sumP7510s3, sumP7505, sumP6920, sumDes, sumOc, sumsubsidiado, sumcontributivo, sumespecial, sumningunoeduc, sumpreescolar, sumbasicaprimaria, sumbasicasecundaria, summedia, sumsuperior, summayoriatiempoincapacitado, summayoriatiempooficiohogar, summayoriatiempoestudiando, summayoriatiempobuscandotrabajo, summayoriatiempotrabajo, sumobreroemplgobierno, sumobreroemplempresa, sumempldomestico, sumtrabajadorcuentapropia, sumpatronempleador, sumtrabajadorsinremunempresa, sumtrabajadorsinremunfamilia), by= 'id', type= 'left')
 colnames(test_hogares)
 
-#dividimos por personas en la casa para tener la proporción 
+#Dividimos por personas en la casa para tener la proporción 
 test_hogares$prop_P6585s1h <- test_hogares$P6585s1h / test_hogares$Orden
 test_hogares$prop_P6585s3h <- test_hogares$P6585s3h / test_hogares$Orden
 test_hogares$prop_P7510s3h <- test_hogares$P7510s3h / test_hogares$Orden

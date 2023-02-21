@@ -180,13 +180,13 @@ colnames(train_hogares)
 #1. Creando variables
 
 #1.1 convertimos los valores de 2 en 0 para las variables binarias
-ifelse(test_personas$P6585s1 == 1, 1, 0)
-ifelse(test_personas$P6585s3 == 1, 1, 0)
-ifelse(test_personas$P7510s3 == 1, 1, 0)
-ifelse(test_personas$P7505   == 1, 1, 0)
-ifelse(test_personas$P6920   == 1, 1, 0)
-ifelse(test_personas$Des     == 1, 1, 0)
-ifelse(test_personas$Oc      == 1, 1, 0)
+test_personas$P6585s1 <- ifelse(test_personas$P6585s1 == 1, 1, 0)
+test_personas$P6585s3 <- ifelse(test_personas$P6585s3 == 1, 1, 0)
+test_personas$P7510s3 <- ifelse(test_personas$P7510s3 == 1, 1, 0)
+test_personas$P7505 <- ifelse(test_personas$P7505   == 1, 1, 0)
+test_personas$P6920 <- ifelse(test_personas$P6920   == 1, 1, 0)
+test_personas$Des <- ifelse(test_personas$Des     == 1, 1, 0)
+test_personas$Oc <- ifelse(test_personas$Oc      == 1, 1, 0)
 
 #1.2 con más de 2 categorías 
 ##P6100 ¿A cual de los siguientes regímenes de seguridad social en salud está afiliado:
