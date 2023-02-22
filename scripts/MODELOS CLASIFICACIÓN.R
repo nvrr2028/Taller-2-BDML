@@ -348,9 +348,8 @@ test_hogares$P5090 <- as.factor(test_hogares$P5090) # Tipo de tenencia como fact
 
 ### Primer modelo ### bases test_hogares & train_hogares
 summary(train_hogares$Pobre)
-
-p_load("caret")
-fiveStats <- function(...) c(twoClassSummary(...), defaultSummary(...))
+p_load(caret)
+#logit
 ctrl<- trainControl(method = "cv",
                     number = 10,
                     summaryFunction = fiveStats,
@@ -358,32 +357,13 @@ ctrl<- trainControl(method = "cv",
                     verbose=FALSE,
                     savePredictions = T)
 set.seed(1410)
-modelo1logit_caret <- train(Pobre~preescolar+basicaprimaria.TRUE, 
+mylogit_caret_m1 <- train(Pobre~P5000,
                        data = train_hogares, 
                        method = "glm",
                        trControl = ctrl,
                        family = "binomial", 
                        metric = 'Accuracy')
-
-lambda_grid <- 10^seq(-4, 0.01, length = 10) #en la practica se suele usar una grilla de 200 o 300
-
-
-set.seed(1410)
-mylogit_lasso_acc <- train(pobrePobre~preescolar+basicaprimaria
-                           .TRUE,
-                           data = train_hogares, 
-                           method = "glmnet",
-                           trControl = ctrl,
-                           family = "binomial", 
-                           metric = "Accuracy",
-                           tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
-                           preProcess = c("center", "scale")
-)
-mylogit_lasso_acc
-
-
-
-
+mylogit_caret_m1
 
 
 
