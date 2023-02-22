@@ -18,7 +18,7 @@ setwd("C:/Users/nicol/Documents/GitHub/Repositorios/Taller-2-BDML")
 # ------------------------------------------------------------------------------------ #
 
 list.of.packages = c("pacman", "readr","tidyverse", "dplyr", "arsenal", "fastDummies", 
-                     "caret", "glmnet", "MLmetrics", "skimr", "plyr")
+                     "caret", "glmnet", "MLmetrics", "skimr", "plyr", "stargazer")
 
 new.packages = list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -66,13 +66,13 @@ test_personas <- subset(test_personas_original, select = c(id, Orden, Clase, P62
 #1. Creando variables
 
 #1.1 convertimos los valores de 2 en 0 para las variables binarias
-train_personas$P6585s1 <- ifelse(train_personas$P6585s1 == 1, 1, 0)
-train_personas$P6585s3 <- ifelse(train_personas$P6585s3 == 1, 1, 0)
-train_personas$P7510s3 <- ifelse(train_personas$P7510s3 == 1, 1, 0)
-train_personas$P7505 <- ifelse(train_personas$P7505   == 1, 1, 0)
-train_personas$P6920 <- ifelse(train_personas$P6920   == 1, 1, 0)
-train_personas$Des <- ifelse(train_personas$Des     == 1, 1, 0)
-train_personas$Oc <- ifelse(train_personas$Oc      == 1, 1, 0)
+train_personas$P6585s1 <- ifelse(train_personas$P6585s1 == 1, 1, 0) # ¿el mes pasado recibió a. Auxilio o subsidio de alimentación?
+train_personas$P6585s3 <- ifelse(train_personas$P6585s3 == 1, 1, 0) # ¿el mes pasado recibió c. Subsidio familiar?
+train_personas$P7510s3 <- ifelse(train_personas$P7510s3 == 1, 1, 0) # Durante los últimos 12 meses, ¿recibió c. ayudas en dinero de instituciones del país?
+train_personas$P7505 <- ifelse(train_personas$P7505   == 1, 1, 0) # Durante los últimos doce meses, ¿recibió dinero de otros hogares, personas o instituciones no gubernamentales; dinero por intereses, dividendos, utilidades o por cesantias?
+train_personas$P6920 <- ifelse(train_personas$P6920   == 1, 1, 0) # ¿está... Cotizando actualmente a un fondo de pensiones?
+train_personas$Des <- ifelse(train_personas$Des     == 1, 1, 0) # Desocupado 1: sí
+train_personas$Oc <- ifelse(train_personas$Oc      == 1, 1, 0) # Ocupado 1: sí
 
 #1.2 con más de 2 categorías 
 ##P6100 ¿A cual de los siguientes regímenes de seguridad social en salud está afiliado:
@@ -174,6 +174,13 @@ train_hogares$prop_trabajadorsinremunempresa    <- train_hogares$trabajadorsinre
 
 colnames(train_hogares)
 
+#1.3 Modificaciones adicionales 
+train_hogares$Pobre <- as.factor(train_hogares$Pobre) # Pobre como factor
+train_hogares$Depto <- as.factor(train_hogares$Depto) # Departamento como factor
+train_hogares$P5000 <- as.factor(train_hogares$P5000) # Número de cuartos como factor
+train_hogares$P5010 <- as.factor(train_hogares$P5010) # Número de dormitorios como factor
+train_hogares$P5090 <- as.factor(train_hogares$P5090) # Tipo de tenencia como factor
+
 #PARA TEST------------------------------------------------------------------------------
 
 #1. Creando variables
@@ -264,7 +271,6 @@ test_hogares$prop_P7505h   <- test_hogares$P7505h   / test_hogares$Orden
 test_hogares$prop_P6920h   <- test_hogares$P6920h   / test_hogares$Orden
 test_hogares$prop_Desh     <- test_hogares$Desh     / test_hogares$Orden
 test_hogares$prop_Och      <- test_hogares$Och      / test_hogares$Orden
-
 test_hogares$prop_subsidiado                   <- test_hogares$subsidiado / test_hogares$Orden
 test_hogares$prop_contributivo                 <- test_hogares$contributivo / test_hogares$Orden
 test_hogares$prop_especial                     <- test_hogares$especial / test_hogares$Orden
@@ -287,25 +293,105 @@ test_hogares$prop_patronempleador              <- test_hogares$patronempleador /
 test_hogares$prop_trabajadorsinremunfamilia    <- test_hogares$trabajadorsinremunfamilia / test_hogares$Orden
 test_hogares$prop_trabajadorsinremunempresa    <- test_hogares$trabajadorsinremunempresa / test_hogares$Orden
 
+#1.3 Modificaciones adicionales 
+test_hogares$Depto <- as.factor(test_hogares$Depto) # Departamento como factor
+test_hogares$P5000 <- as.factor(test_hogares$P5000) # Número de cuartos como factor
+test_hogares$P5010 <- as.factor(test_hogares$P5010) # Número de dormitorios como factor
+test_hogares$P5090 <- as.factor(test_hogares$P5090) # Tipo de tenencia como factor
+
 # ------------------------------------------------------------------------------------ #
 # 3. Modelos de regresión
 # ------------------------------------------------------------------------------------ #
 
-seed(11111)
+# En el caso de los modelos de regresión, nuestro interés para a ser la predicción del 
+# ingreso de los hogares, para luego evaluar si ese ingreso se encuentra por encima o 
+# por debajo de la línea de pobreza. 
+# La medida de desempeño es el RMSE.
 
-# 3.1 Modelo benchmark: regresión lineal
-lm()
+# Variable explicada Y 
+#      Ingtotug 
+#      Pobre (discreta) - Pobre=1 No pobre=0
+
+# Lista de posibles variables explicativas: 
+#      P5000 (discreta) - Incluyendo sala-comedor ¿de cuántos cuartos en total dispone este hogar?
+#      P5010 (discreta) - ¿En cuántos de esos cuartos duermen las personas de este hogar?
+#      P5090 (discreta) - La vivienda ocupada por este hogar es
+#      P5130 (continua) - Si tuviera que pagar arriendo por esta vivienda, ¿cuánto estima que tendría que pagar mensualmente?
+#      P5140 (continua) - ¿Cuánto pagan mensualmente por arriendo?
+#      Nper (continua) - Personas en el hogar
+#      Npersug (continua) - Número de personas en la unidad de gasto
+#      Depto (discreta) - Departamento
+#      prop_P6585s1h - Proporción de personas que recibieron un auxilio de alimentación en el hogar
+#      prop_P6585s3h - Proporción de personas que recibieron un auxilio familiar en el hogar
+#      prop_P7510s3h - Proporción de personas que recibieron dinero de instituciones en el hogar.
+#      prop_P7505h - Proporción de personas que recibieron dinero de otros hogares en el hogar.
+#      prop_P6920h - Proporción de personas en el hogar que estarían cotizando a pensión.
+#      prop_Desh - Proporción de personas en el hogar desempleadas.
+#      prop_Och - Proporción de personas en el hogar empleadas.  
+#      Npobres (continua) - Número de pobres
+#      prop_subsidiado - Proporción de personas en el hogar cotizantes al regimen subsidiado.                
+#      prop_contributivo - Proporción de personas en el hogar cotizantes al regimen contributivo.    
+#      prop_especial - Proporción de personas en el hogar cotizantes al regimen especial.              
+#      prop_ningunoeduc - Proporción de personas en el hogar con ningún nivel de educación.                 
+#      prop_preescolar - Proporción de personas en el hogar con nivel de educación preescolar.                 
+#      prop_basicaprimaria - Proporción de personas en el hogar con nivel de educación básica primaria.            
+#      prop_basicasecundaria - Proporción de personas en el hogar con nivel de educación básica secundaria.           
+#      prop_media - Proporción de personas en el hogar con nivel de educación media.                 
+#      prop_superior - Proporción de personas en el hogar con nivel de educación superior.            
+#      prop_mayoriatiempotrabajo - Proporción de personas en el hogar que pasaron la mayor parte del tiempo trabajando.       
+#      prop_mayoriatiempobuscandotrabajo - Proporción de personas en el hogar que pasaron la mayor parte del tiempo buscando trabajo.  
+#      prop_mayoriatiempoestudiando - Proporción de personas en el hogar que pasaron la mayor parte del tiempo estudiando.
+#      prop_mayoriatiempooficiohogar - Proporción de personas en el hogar que pasaron la mayor parte del tiempo haciendo oficios del hogar.   
+#      prop_mayoriatiempoincapacitado - Proporción de personas en el hogar que pasaron la mayor parte del tiempo incapacitado.
+#      prop_obreroemplempresa - Proporción de personas en el hogar que son empleados de una empresa privada.     
+#      prop_obreroemplgobierno - Proporción de personas en el hogar que son empleados del gobierno.              
+#      prop_empldomestico - Proporción de personas en el hogar que son empleados domésticos.               
+#      prop_trabajadorcuentapropia - Proporción de personas en el hogar que son cuenta propia. 
+#      prop_patronempleador - Proporción de personas en el hogar que son patrón.         
+#      prop_trabajadorsinremunfamilia - Proporción de personas en el hogar que son trabajadores de la familia sin remuneración.
+#      prop_trabajadorsinremunempresa - Proporción de personas en el hogar que son trabajadores de una empresa sin remuneración.
+
+set.seed(11111)
+
+# Partición de la base de datos train, con el objetivo de evaluar el performance de los modelos.
+inTrain <- createDataPartition(
+  y = train_hogares$Ingtotug,## Nuestra  
+  p = .7, ## Usamos 70%  de los datos en el conjunto de entrenamiento 
+  list = FALSE)
+
+hog_training <- train_hogares[ inTrain,] # Set de datos de entrenamiento
+hog_testing  <- train_hogares[-inTrain,] # Set de datos de evaluación
+nrow(hog_training) # El conjunto de entrenamiento contiene el 70% de la base original (115473/164960*100)
 
 
-# 3.2 Lasso
+
+
+### 3.1 Modelo benchmark: regresión lineal ------------------------------------------------------------
+
+# Cross-validation
+ctrl <- trainControl(
+  method = "cv", 
+  number = 10) # número de folds
+# Estimación de modelo de regresión lineal
+ModeloRL <- train(Ingtotug~, data = hog_training, method = 'lm',
+                  trControl= ctrl, 
+                  preProcess= c('center', 'scale'))
+
+### 3.2 Lasso -----------------------------------------------------------------------------------------
 
 
 
-# 3.3 Elastic net
+### 3.3 Elastic net -----------------------------------------------------------------------------------
 
 
 
-# 3.4 Por verse
+### 3.4 Random Forest ---------------------------------------------------------------------------------
+
+
+
+### 3.5 AdaBoosting -----------------------------------------------------------------------------------
+
+
 
 
 

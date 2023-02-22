@@ -66,13 +66,13 @@ test_personas <- subset(test_personas_original, select = c(id, Orden, Clase, P62
 #1. Creando variables
 
 #1.1 convertimos los valores de 2 en 0 para las variables binarias
-train_personas$P6585s1 <- ifelse(train_personas$P6585s1 == 1, 1, 0)
-train_personas$P6585s3 <- ifelse(train_personas$P6585s3 == 1, 1, 0)
-train_personas$P7510s3 <- ifelse(train_personas$P7510s3 == 1, 1, 0)
-train_personas$P7505 <- ifelse(train_personas$P7505   == 1, 1, 0)
-train_personas$P6920 <- ifelse(train_personas$P6920   == 1, 1, 0)
-train_personas$Des <- ifelse(train_personas$Des     == 1, 1, 0)
-train_personas$Oc <- ifelse(train_personas$Oc      == 1, 1, 0)
+train_personas$P6585s1 <- ifelse(train_personas$P6585s1 == 1, 1, 0) # ¿el mes pasado recibió a. Auxilio o subsidio de alimentación?
+train_personas$P6585s3 <- ifelse(train_personas$P6585s3 == 1, 1, 0) # ¿el mes pasado recibió c. Subsidio familiar?
+train_personas$P7510s3 <- ifelse(train_personas$P7510s3 == 1, 1, 0) # Durante los últimos 12 meses, ¿recibió c. ayudas en dinero de instituciones del país?
+train_personas$P7505 <- ifelse(train_personas$P7505   == 1, 1, 0) # Durante los últimos doce meses, ¿recibió dinero de otros hogares, personas o instituciones no gubernamentales; dinero por intereses, dividendos, utilidades o por cesantias?
+train_personas$P6920 <- ifelse(train_personas$P6920   == 1, 1, 0) # ¿está... Cotizando actualmente a un fondo de pensiones?
+train_personas$Des <- ifelse(train_personas$Des     == 1, 1, 0) # Desocupado 1: sí
+train_personas$Oc <- ifelse(train_personas$Oc      == 1, 1, 0) # Ocupado 1: sí
 
 #1.2 con más de 2 categorías 
 ##P6100 ¿A cual de los siguientes regímenes de seguridad social en salud está afiliado:
@@ -173,6 +173,13 @@ train_hogares$prop_trabajadorsinremunfamilia    <- train_hogares$trabajadorsinre
 train_hogares$prop_trabajadorsinremunempresa    <- train_hogares$trabajadorsinremunempresa / train_hogares$Orden
 
 colnames(train_hogares)
+
+#1.3 Modificaciones adicionales 
+train_hogares$Pobre <- as.factor(train_hogares$Pobre) # Pobre como factor
+train_hogares$Depto <- as.factor(train_hogares$Depto) # Departamento como factor
+train_hogares$P5000 <- as.factor(train_hogares$P5000) # Número de cuartos como factor
+train_hogares$P5010 <- as.factor(train_hogares$P5010) # Número de dormitorios como factor
+train_hogares$P5090 <- as.factor(train_hogares$P5090) # Tipo de tenencia como factor
 
 #PARA TEST------------------------------------------------------------------------------
 
@@ -286,6 +293,12 @@ test_hogares$prop_trabajadorcuentapropia       <- test_hogares$trabajadorcuentap
 test_hogares$prop_patronempleador              <- test_hogares$patronempleador / test_hogares$Orden
 test_hogares$prop_trabajadorsinremunfamilia    <- test_hogares$trabajadorsinremunfamilia / test_hogares$Orden
 test_hogares$prop_trabajadorsinremunempresa    <- test_hogares$trabajadorsinremunempresa / test_hogares$Orden
+
+#1.3 Modificaciones adicionales 
+test_hogares$Depto <- as.factor(test_hogares$Depto) # Departamento como factor
+test_hogares$P5000 <- as.factor(test_hogares$P5000) # Número de cuartos como factor
+test_hogares$P5010 <- as.factor(test_hogares$P5010) # Número de dormitorios como factor
+test_hogares$P5090 <- as.factor(test_hogares$P5090) # Tipo de tenencia como factor
 
 # ------------------------------------------------------------------------------------ #
 # 3. Estadísticas descriptivas
