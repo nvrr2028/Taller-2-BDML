@@ -363,27 +363,50 @@ hog_training <- train_hogares[ inTrain,] # Set de datos de entrenamiento
 hog_testing  <- train_hogares[-inTrain,] # Set de datos de evaluación
 nrow(hog_training) # El conjunto de entrenamiento contiene el 70% de la base original (115473/164960*100)
 
-
-
-
-### 3.1 Modelo benchmark: regresión lineal ------------------------------------------------------------
-
 # Cross-validation
 ctrl <- trainControl(
   method = "cv", 
-  number = 10) # número de folds
-# Estimación de modelo de regresión lineal
-ModeloRL <- train(Ingtotug~, data = hog_training, method = 'lm',
-                  trControl= ctrl, 
-                  preProcess= c('center', 'scale'))
+  number = 7) # número de folds
+
+# Fórmula de los modelos
+fmla <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
+                  prop_P7505h+prop_P6920h+prop_Desh+Npobres+prop_subsidiado+prop_contributivo+prop_especial+
+                  prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
+                  prop_mayoriatiempotrabajo+prop_mayoriatiempobuscandotrabajo+prop_mayoriatiempoestudiando+
+                  prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
+                  prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
+                  prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa)
+
+### 3.1 Modelo benchmark: regresión lineal ------------------------------------------------------------
+
+# Estimación de modelo de regresión lineal con datos de entrenamiento
+ModeloRL <- train(fmla, 
+                  data = hog_training, method = 'lm',
+                  trControl= ctrl,
+                  preProcess = c("center", "scale"))
+
+summary(linear_reg)
+
+# Predicción del modelo de regresión lineal con datos 
 
 ### 3.2 Lasso -----------------------------------------------------------------------------------------
 
 
 
 ### 3.3 Elastic net -----------------------------------------------------------------------------------
+EN<-caret::train(fmla,
+          data=hog_training,
+          method = 'glmnet', 
+          trControl = hog_training,
+          tuneGrid = expand.grid(alpha = seq(0,1,by = 0.1), #lasso
+                                 lambda = seq(0.001,0.02,by = 0.001)),
+          preProcess = c("center", "scale")
+) 
+?train
+EN$bestTune
 
-
+coef_EN<-coef(EN$finalModel, EN$bestTune$lambda)
+coef_EN
 
 ### 3.4 Random Forest ---------------------------------------------------------------------------------
 
