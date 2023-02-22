@@ -13,6 +13,8 @@ rm(list = ls(all.names = TRUE))
 # Directorio de trabajo (cambiar según computador)
 setwd("C:/Users/nicol/Documents/GitHub/Repositorios/Taller-2-BDML")
 
+setwd("C:/Users/bray/Desktop/Big Data/Talleres/Taller-2-BDML")
+
 # ------------------------------------------------------------------------------------ #
 # Cargar librerias.
 # ------------------------------------------------------------------------------------ #
