@@ -12,6 +12,7 @@ rm(list = ls(all.names = TRUE))
 
 # Directorio de trabajo (cambiar según computador)
 setwd("C:/Users/nicol/Documents/GitHub/Repositorios/Taller-2-BDML")
+setwd("/Users/bray/Desktop/Big Data/Talleres/Taller-2-BDML")
 
 # ------------------------------------------------------------------------------------ #
 # Cargar librerias.
@@ -344,3 +345,47 @@ test_hogares$P5090 <- as.factor(test_hogares$P5090) # Tipo de tenencia como fact
 #      prop_patronempleador - Proporción de personas en el hogar que son patrón.         
 #      prop_trabajadorsinremunfamilia - Proporción de personas en el hogar que son trabajadores de la familia sin remuneración.
 #      prop_trabajadorsinremunempresa - Proporción de personas en el hogar que son trabajadores de una empresa sin remuneración.
+
+### Primer modelo ### bases test_hogares & train_hogares
+summary(train_hogares$Pobre)
+
+p_load("caret")
+fiveStats <- function(...) c(twoClassSummary(...), defaultSummary(...))
+ctrl<- trainControl(method = "cv",
+                    number = 10,
+                    summaryFunction = fiveStats,
+                    classProbs = TRUE,
+                    verbose=FALSE,
+                    savePredictions = T)
+set.seed(1410)
+modelo1logit_caret <- train(Pobre~preescolar+basicaprimaria.TRUE, 
+                       data = train_hogares, 
+                       method = "glm",
+                       trControl = ctrl,
+                       family = "binomial", 
+                       metric = 'Accuracy')
+
+lambda_grid <- 10^seq(-4, 0.01, length = 10) #en la practica se suele usar una grilla de 200 o 300
+
+
+set.seed(1410)
+mylogit_lasso_acc <- train(pobrePobre~preescolar+basicaprimaria
+                           .TRUE,
+                           data = train_hogares, 
+                           method = "glmnet",
+                           trControl = ctrl,
+                           family = "binomial", 
+                           metric = "Accuracy",
+                           tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
+                           preProcess = c("center", "scale")
+)
+mylogit_lasso_acc
+
+
+
+
+
+
+
+
+
