@@ -430,7 +430,7 @@ ModeloEN<-caret::train(fmla,
 
 summary(ModeloEN) # Resumen del modelo
 ggplot(varImp(ModeloEN)) # Gráfico de importancia de las variables
-EN$bestTune
+ModeloEN$bestTune
 
 ## Gráfico de los coeficientes 
 #Put coefficients in a data frame, except the intercept
@@ -480,6 +480,7 @@ pob2_ModeloEN <- ifelse(pred_test2_ModeloEN<test_hogares$Lp, 1, 0)
 # Exportar para prueba en Kaggle
 Kaggle_ModeloEN <- data.frame(id=test_hogares$id, pobre=pob2_ModeloEN)
 write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
+# Accuracy: 0.75462
 
 ### 3.4 Random Forest ---------------------------------------------------------------------------------
 
