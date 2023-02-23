@@ -9,3 +9,4 @@ data/test_hogares.zip
 data/test_personas.csv
 data/train_hogares.csv
 data/train_personas.csv
+data/.DS_Store
