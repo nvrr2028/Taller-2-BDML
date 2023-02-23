@@ -348,22 +348,61 @@ test_hogares$P5090 <- as.factor(test_hogares$P5090) # Tipo de tenencia como fact
 
 ### Primer modelo ### bases test_hogares & train_hogares
 summary(train_hogares$Pobre)
+set.seed(1234)
+# Partición de la base de datos train, con el objetivo de evaluar el performance de los modelos.
+inTrain <- createDataPartition(
+  y = train_hogares$Pobre,## Nuestra  
+  p = .7, ## Usamos 70%  de los datos en el conjunto de entrenamiento 
+  list = FALSE)
+
+hog_training_class <- train_hogares[ inTrain,] # Set de datos de entrenamiento
+hog_testing_class  <- train_hogares[-inTrain,] # Set de datos de evaluación
+nrow(hog_training_class) # El conjunto de entrenamiento contiene el 70% de la base original (115473/164960*100)
+
+# Cross-validation
+ctrl <- trainControl(
+  method = "cv", 
+  number = 10) # número de folds
+
+# Fórmula de los modelos
+modelo <- formula(Pobre~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
+                  prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
+                  prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
+                  prop_mayoriatiempotrabajo+prop_mayoriatiempobuscandotrabajo+prop_mayoriatiempoestudiando+
+                  prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
+                  prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
+                  prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa)
 p_load(caret)
-#logit
-ctrl<- trainControl(method = "cv",
-                    number = 10,
-                    summaryFunction = fiveStats,
-                    classProbs = TRUE,
-                    verbose=FALSE,
-                    savePredictions = T)
-set.seed(1410)
-mylogit_caret_m1 <- train(Pobre~P5000,
-                       data = train_hogares, 
-                       method = "glm",
-                       trControl = ctrl,
-                       family = "binomial", 
-                       metric = 'Accuracy')
+#### logit1 caret ####
+mylogit_caret_m1 <- train(modelo,
+                          data = hog_training_class, 
+                          method = "glm",
+                          trControl = ctrl,
+                          family = "binomial", 
+                          metric = 'Accuracy')
 mylogit_caret_m1
 
+## Predicción 1: Predicciones con hog_testing
+p_load(Metrics)
+pred_test1_Modelo_logit_caret_m1 <- predict(mylogit_caret_m1, newdata = hog_testing_class) # Predicción
+eva_Modelo_logit_caret_m1 <- data.frame(obs=hog_testing_class$Pobre, pred=pred_test1_Modelo_logit_caret_m1) # Data frame con observados y predicciones
+metrics_Modelo_logit_caret_m1 <- metrics(eva_Modelo_logit_caret_m1, obs, pred); metrics_Modelologit_caret_m1 # Cálculo del medidas de precisión
+
+# Identificación de pobres y no pobres en hog_testing
+pob1_Modelo <- ifelse(pred_test1_ModeloEN<hog_testing$Lp, 1, 0)
+
+# Evaluación de clasificación
+eva_ModeloEN <- data.frame(obs=as.factor(hog_testing$Pobre), pred=as.factor(pob1_ModeloEN)) # Data frame con observados y predicciones
+confmatrix_ModeloEN <- confusionMatrix(data = as.factor(pob1_ModeloEN), reference = as.factor(hog_testing$Pobre)) ; confmatrix_ModeloRL # Matriz de confusión
+
+## Predicción 2: Predicciones con test_hogares
+pred_test2_ModeloEN <- predict(ModeloEN, newdata = test_hogares)
+
+# Identificación de pobres y no pobres en test_hogares
+pob2_ModeloEN <- ifelse(pred_test2_ModeloEN<test_hogares$Lp, 1, 0)
+
+# Exportar para prueba en Kaggle
+Kaggle_ModeloEN <- data.frame(id=test_hogares$id, pobre=pob2_ModeloEN)
+write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 
 
