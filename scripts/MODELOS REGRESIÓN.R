@@ -18,7 +18,8 @@ setwd("C:/Users/nicol/Documents/GitHub/Repositorios/Taller-2-BDML")
 # ------------------------------------------------------------------------------------ #
 
 list.of.packages = c("pacman", "readr","tidyverse", "dplyr", "arsenal", "fastDummies", 
-                     "caret", "glmnet", "MLmetrics", "skimr", "plyr", "stargazer")
+                     "caret", "glmnet", "MLmetrics", "skimr", "plyr", "stargazer", "jtools", 
+                     "Metrics", "writexl", "yardstick")
 
 new.packages = list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -175,6 +176,7 @@ train_hogares$prop_trabajadorsinremunempresa    <- train_hogares$trabajadorsinre
 colnames(train_hogares)
 
 #1.3 Modificaciones adicionales 
+train_hogares$P5010[train_hogares$P5010>=10] <- 10
 train_hogares$Pobre <- as.factor(train_hogares$Pobre) # Pobre como factor
 train_hogares$Depto <- as.factor(train_hogares$Depto) # Departamento como factor
 train_hogares$P5000 <- as.factor(train_hogares$P5000) # Número de cuartos como factor
@@ -294,6 +296,7 @@ test_hogares$prop_trabajadorsinremunfamilia    <- test_hogares$trabajadorsinremu
 test_hogares$prop_trabajadorsinremunempresa    <- test_hogares$trabajadorsinremunempresa / test_hogares$Orden
 
 #1.3 Modificaciones adicionales 
+test_hogares$P5010[test_hogares$P5010>=10] <- 10
 test_hogares$Depto <- as.factor(test_hogares$Depto) # Departamento como factor
 test_hogares$P5000 <- as.factor(test_hogares$P5000) # Número de cuartos como factor
 test_hogares$P5010 <- as.factor(test_hogares$P5010) # Número de dormitorios como factor
@@ -370,7 +373,7 @@ ctrl <- trainControl(
 
 # Fórmula de los modelos
 fmla <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
-                  prop_P7505h+prop_P6920h+prop_Desh+Npobres+prop_subsidiado+prop_contributivo+prop_especial+
+                  prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
                   prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
                   prop_mayoriatiempotrabajo+prop_mayoriatiempobuscandotrabajo+prop_mayoriatiempoestudiando+
                   prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
@@ -379,34 +382,104 @@ fmla <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop
 
 ### 3.1 Modelo benchmark: regresión lineal ------------------------------------------------------------
 
-# Estimación de modelo de regresión lineal con datos de entrenamiento
+## Ajuste: Estimación de modelo de regresión lineal con datos de entrenamiento
 ModeloRL <- train(fmla, 
                   data = hog_training, method = 'lm',
                   trControl= ctrl,
                   preProcess = c("center", "scale"))
 
-summary(linear_reg)
+summary(ModeloRL) # Resumen del modelo
+ggplot(varImp(ModeloRL)) # Gráfico de importancia de las variables
 
-# Predicción del modelo de regresión lineal con datos 
+## Predicción 1: Predicciones con hog_testing
+pred_test1_ModeloRL <- predict(ModeloRL, newdata = hog_testing) # Predicción
+eva_ModeloRL <- data.frame(obs=hog_testing$Ingtotug, pred=pred_test1_ModeloRL) # Data frame con observados y predicciones
+metrics_ModeloRL <- metrics(eva_ModeloRL, obs, pred); metrics_ModeloRL # Cálculo del medidas de precisión
+
+# Identificación de pobres y no pobres en hog_testing
+pob1_ModeloRL <- ifelse(pred_test1_ModeloRL<hog_testing$Lp, 1, 0)
+
+# Evaluación de clasificación
+eva_ModeloRL <- data.frame(obs=as.factor(hog_testing$Pobre), pred=as.factor(pob1_ModeloRL)) # Data frame con observados y predicciones
+confmatrix_ModeloRL <- confusionMatrix(data = as.factor(pob1_ModeloRL), reference = as.factor(hog_testing$Pobre)) ; confmatrix_ModeloRL # Matriz de confusión
+
+## Predicción 2: Predicciones con test_hogares
+pred_test2_ModeloRL <- predict(ModeloRL, newdata = test_hogares)
+
+# Identificación de pobres y no pobres en test_hogares
+pob2_ModeloRL <- ifelse(pred_test2_ModeloRL<test_hogares$Lp, 1, 0)
+
+# Exportar para prueba en Kaggle
+Kaggle_ModeloRL <- data.frame(id=test_hogares$id, pobre=pob2_ModeloRL)
+write.csv(Kaggle_ModeloRL,"./stores/Kaggle_ModeloRL.csv", row.names = FALSE)
+# Accuracy: 0.75349
 
 ### 3.2 Lasso -----------------------------------------------------------------------------------------
 
 
 
 ### 3.3 Elastic net -----------------------------------------------------------------------------------
-EN<-caret::train(fmla,
+ModeloEN<-caret::train(fmla,
           data=hog_training,
           method = 'glmnet', 
-          trControl = hog_training,
-          tuneGrid = expand.grid(alpha = seq(0,1,by = 0.1), #lasso
-                                 lambda = seq(0.001,0.02,by = 0.001)),
+          trControl = ctrl,
+          tuneGrid = expand.grid(alpha = seq(0,1,by = 0.01), #Lasso
+                                 lambda = seq(0.001,0.1,by = 0.001)),
           preProcess = c("center", "scale")
 ) 
-?train
+
+summary(ModeloEN) # Resumen del modelo
+ggplot(varImp(ModeloEN)) # Gráfico de importancia de las variables
 EN$bestTune
+
+## Gráfico de los coeficientes 
+#Put coefficients in a data frame, except the intercept
+coefs_EN<-data.frame(t(as.matrix(coef(ModeloEN)))) %>% select(-X.Intercept.)
+#add the lambda grid to to data frame
+coefs_EN<- coefs_EN %>% mutate(lambda=grid)              
+
+#ggplot friendly format
+coefs_EN<- coefs_EN %>% pivot_longer(cols=!lambda,
+                                           names_to="variables",
+                                           values_to="coefficients")
+
+
+
+ggplot(data=coefs_EN, aes(x = lambda, y = coefficients, color = variables)) +
+  geom_line() +
+  scale_x_log10(
+    breaks = scales::trans_breaks("log10", function(x) 10^x),
+    labels = scales::trans_format("log10",
+                                  scales::math_format(10^.x))
+  ) +
+  labs(title = "Coeficientes Elastic Net", x = "Lambda", y = "Coeficientes") +
+  theme_bw() +
+  theme(legend.position="bottom")
 
 coef_EN<-coef(EN$finalModel, EN$bestTune$lambda)
 coef_EN
+
+## Predicción 1: Predicciones con hog_testing
+pred_test1_ModeloEN <- predict(ModeloEN, newdata = hog_testing) # Predicción
+eva_ModeloEN <- data.frame(obs=hog_testing$Ingtotug, pred=pred_test1_ModeloEN) # Data frame con observados y predicciones
+metrics_ModeloEN <- metrics(eva_ModeloEN, obs, pred); metrics_ModeloEN # Cálculo del medidas de precisión
+
+# Identificación de pobres y no pobres en hog_testing
+pob1_ModeloEN <- ifelse(pred_test1_ModeloEN<hog_testing$Lp, 1, 0)
+
+# Evaluación de clasificación
+eva_ModeloEN <- data.frame(obs=as.factor(hog_testing$Pobre), pred=as.factor(pob1_ModeloEN)) # Data frame con observados y predicciones
+confmatrix_ModeloEN <- confusionMatrix(data = as.factor(pob1_ModeloEN), reference = as.factor(hog_testing$Pobre)) ; confmatrix_ModeloRL # Matriz de confusión
+
+## Predicción 2: Predicciones con test_hogares
+pred_test2_ModeloEN <- predict(ModeloEN, newdata = test_hogares)
+
+# Identificación de pobres y no pobres en test_hogares
+pob2_ModeloEN <- ifelse(pred_test2_ModeloEN<test_hogares$Lp, 1, 0)
+
+# Exportar para prueba en Kaggle
+Kaggle_ModeloEN <- data.frame(id=test_hogares$id, pobre=pob2_ModeloEN)
+write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 
 ### 3.4 Random Forest ---------------------------------------------------------------------------------
 
