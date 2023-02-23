@@ -365,8 +365,5 @@ mylogit_caret_m1 <- train(Pobre~P5000,
                        metric = 'Accuracy')
 mylogit_caret_m1
 
-r
-
-
 
 
