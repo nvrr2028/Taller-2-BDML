@@ -489,7 +489,7 @@ mylogit_lasso_upsample <- train(modelo,
                                 method = "glmnet",
                                 trControl = ctrl,
                                 family = "binomial", 
-                                metric = "Accuracy",
+                                metric = "Recall",
                                 tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
                                 preProcess = c("center", "scale")
 )
@@ -512,7 +512,7 @@ mylogit_lasso_downsample <- train(modelo,
                                 method = "glmnet",
                                 trControl = ctrl,
                                 family = "binomial", 
-                                metric = "Accuracy",
+                                metric = "Recall",
                                 tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
                                 preProcess = c("center", "scale")
 )
