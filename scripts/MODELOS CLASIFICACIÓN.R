@@ -12,8 +12,8 @@ rm(list = ls(all.names = TRUE))
 
 # Directorio de trabajo (cambiar según computador)
 #setwd("C:/Users/nicol/Documents/GitHub/Repositorios/Taller-2-BDML")
-#setwd("/Users/bray/Desktop/Big Data/Talleres/Taller-2-BDML")
-setwd('C:/Users/sofia/OneDrive/Documentos/GitHub/Taller-2-BDML')
+setwd("/Users/bray/Desktop/Big Data/Talleres/Taller-2-BDML")
+#setwd('C:/Users/sofia/OneDrive/Documentos/GitHub/Taller-2-BDML')
 
 # ------------------------------------------------------------------------------------ #
 # Cargar librerias.
@@ -353,6 +353,7 @@ test_hogares$P5090 <- as.factor(test_hogares$P5090) # Tipo de tenencia como fact
 # CLASIFICACIÓN -------------------------------------
 #La variable que vamos a usar es Pobre 
 p_load(caret)
+train_near_zero <- nearZeroVar(train, saveMetrics = TRUE)
 
 #A CORRER MODELOS --------------
 ### Primer modelo ### bases test_hogares & train_hogares
@@ -384,7 +385,7 @@ prop.table(table(test$Pobre))
 
 #variables_numericas <-  c("P5130","P5140", "Ingtotug", "prop_P6585s1h", "prop_P6585s3h", "prop_P7510s3h", "prop_P7505h", "prop_P6920h", "prop_Desh", "prop_Och", "prop_contributivo", "prop_subsidiado", "prop_contributivo", "prop_especial", "prop_ningunoeduc", "prop_preescolar", "prop_basicaprimaria", "prop_basicasecundaria", "prop_media", "prop_superior", "prop_mayoriatiempotrabajo", "prop_mayoriatiempobuscandotrabajo", "prop_mayoriatiempoestudiando", "prop_mayoriatiempooficiohogar", "prop_mayoriatiempoincapacitado", "prop_obreroemplempresa", "prop_obreroemplgobierno", "prop_empldomestico", "prop_trabajadorcuentapropia", "prop_patronempleador", "prop_trabajadorsinremunfamilia", "prop_trabajadorsinremunempresa") ###############
 #escalador <- preProcess(train[, variables_numericas],
-                        method = c("center", "scale"))
+                      ##  method = c("center", "scale"))
 #train_s[, variables_numericas ] <- predict(escalador, train[, variables_numericas, ])
 #test_s[, variables_numericas] <- predict(escalador, test[, variables_numericas])
 
@@ -402,6 +403,7 @@ modelo <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s
                     prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
                     prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
                     prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa)
+### modelo lineal 
 
 #PRIMER MODELO 
 mylogit_caret_m1 <- train(modelo,
@@ -462,7 +464,7 @@ metricas1 %>%
 lambda_grid <- 10^seq(-4, 0.01, length = 10)
 
 mylogit_lasso <- train(modelo,
-                            data = hog_training_class , 
+                            data = train , 
                             method = "glmnet",
                             trControl = ctrl,
                             family = "binomial", 
