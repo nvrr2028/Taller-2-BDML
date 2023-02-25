@@ -21,7 +21,7 @@ setwd("/Users/bray/Desktop/Big Data/Talleres/Taller-2-BDML")
 
 list.of.packages = c("pacman", "readr","tidyverse", "dplyr", "arsenal", "fastDummies", 
                      "caret", "glmnet", "MLmetrics", "skimr", "plyr", "stargazer", "jtools", 
-                     "Metrics", "writexl", "yardstick")
+                     "Metrics", "writexl", "yardstick","knitr")
 
 new.packages = list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -353,7 +353,6 @@ test_hogares$P5090 <- as.factor(test_hogares$P5090) # Tipo de tenencia como fact
 # CLASIFICACIÓN -------------------------------------
 #La variable que vamos a usar es Pobre 
 p_load(caret)
-train_near_zero <- nearZeroVar(train, saveMetrics = TRUE)
 
 #A CORRER MODELOS --------------
 ### Primer modelo ### bases test_hogares & train_hogares
@@ -395,24 +394,91 @@ prop.table(table(test$Pobre))
 #train <- as_tibble(train)
 #test <- as_tibble(test)
 
+
+
 # Fórmula de los modelos
-modelo <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
+modelo1 <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
                     prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
                     prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
                     prop_mayoriatiempotrabajo+prop_mayoriatiempobuscandotrabajo+prop_mayoriatiempoestudiando+
                     prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
                     prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
                     prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa)
-### modelo lineal 
 
+modelo_rela <- formula(Pobre ~ scale(prop_subsidiado) + scale(prop_contributivo) + scale(prop_especial) +
+                         scale(prop_ningunoeduc) + scale(prop_preescolar) + scale(prop_basicaprimaria) +
+                         scale(prop_basicasecundaria) + scale(prop_media) + scale(prop_superior))
+
+### modelo lineal 
 #PRIMER MODELO 
-mylogit_caret_m1 <- train(modelo,
+mylogit_caret_rela <- train(modelo_rela,
+                          data = train, 
+                          method = "glm",
+                          trControl = ctrl,
+                          family = "binomial", 
+                          metric = 'Accuracy')
+mylogit_caret_rela
+
+#TABLITA DE CÓMO NOS FUE -----------
+y_hat_insamplerela <- predict(mylogit_caret_rela, train)
+y_hat_outsamplerela <- predict(mylogit_caret_rela, test)
+probs_insamplerela <- predict(mylogit_caret_rela, train, type = "prob")[, "1", drop = T]
+probs_outsamplerela <- predict(mylogit_caret_rela, test, type = "prob")[, "1", drop = T]
+
+acc_insamplerela <- Accuracy(y_pred = y_hat_insamplerela, y_true = train$Pobre)
+acc_outsamplerela <- Accuracy(y_pred = y_hat_outsamplerela, y_true = test$Pobre)
+
+pre_insamplerela <- Precision(y_pred = y_hat_insamplerela, 
+                           y_true = train$Pobre, positive = 1)
+pre_outsamplerela <- Precision(y_pred = y_hat_outsamplerela, 
+                            y_true = test$Pobre, positive = 1)
+
+rec_insamplerela <- Recall(y_pred = y_hat_insamplerela, 
+                        y_true = train$Pobre, positive = 1)
+rec_outsamplerela <- Recall(y_pred = y_hat_outsamplerela, 
+                         y_true = test$Pobre, positive = 1)
+
+f1_insamplerela <- F1_Score(y_pred = y_hat_insamplerela, 
+                         y_true = train$Pobre, positive = 1)
+f1_outsamplerela <- F1_Score(y_pred = y_hat_outsamplerela, 
+                          y_true = test$Pobre, positive = 1)
+
+metricas_insamplerela <- data.frame(Modelo = "Regresión logistica Modelo rela", 
+                                 "Muestreo" = NA, 
+                                 "Evaluación" = "Dentro de muestra",
+                                 "Accuracy" = acc_insamplerela,
+                                 "Precision - PPV" = pre_insamplerela,
+                                 "Recall - TPR - Sensitivity" = rec_insamplerela,
+                                 "F1" = f1_insamplerela)
+
+metricas_outsamplerela <- data.frame(Modelo = "Regresión logistica", 
+                                  "Muestreo" = NA, 
+                                  "Evaluación" = "Fuera de muestra",
+                                  "Accuracy" = acc_outsamplerela,
+                                  "Precision - PPV" = pre_outsamplerela,
+                                  "Recall - TPR - Sensitivity" = rec_outsamplerela,
+                                  "F1" = f1_outsamplerela)
+
+metricasrela <- bind_rows(metricas_insamplerela, metricas_outsamplerela)
+metricasrela 
+
+
+
+mylogit_caret_m2 <- train(modelo2,
                           data = train, 
                           method = "glm",
                           trControl = ctrl,
                           family = "binomial", 
                           metric = 'Recall')
-mylogit_caret_m1
+mylogit_caret_m2
+
+mylogit_caret_m3 <- train(modelo3,
+                          data = train, 
+                          method = "glm",
+                          trControl = ctrl,
+                          family = "binomial", 
+                          metric = 'Recall')
+mylogit_caret_m3
 
 #TABLITA DE CÓMO NOS FUE -----------
 y_hat_insample1 <- predict(mylogit_caret_m1, train_s)
