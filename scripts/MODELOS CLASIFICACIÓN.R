@@ -409,8 +409,7 @@ modelo_rela <- formula(Pobre ~ scale(prop_subsidiado) + scale(prop_contributivo)
                          scale(prop_ningunoeduc) + scale(prop_preescolar) + scale(prop_basicaprimaria) +
                          scale(prop_basicasecundaria) + scale(prop_media) + scale(prop_superior))
 
-### modelo lineal 
-#PRIMER MODELO 
+###################################### modelo rela ##########################################
 mylogit_caret_rela <- train(modelo_rela,
                           data = train, 
                           method = "glm",
@@ -462,8 +461,65 @@ metricas_outsamplerela <- data.frame(Modelo = "Regresión logistica",
 metricasrela <- bind_rows(metricas_insamplerela, metricas_outsamplerela)
 metricasrela 
 
+lambda_grid <- 10^seq(-4, 0.01, length = 100)
 
+mylogit_lasso_rela <- train(modelo_rela,
+                            data = train , 
+                            method = "glmnet",
+                            trControl = ctrl,
+                            family = "binomial", 
+                            metric = "Accuracy",
+                            tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
+                            preProcess = c("center", "scale")
+)
+mylogit_lasso_rela
 
+### UP sumpling ### ----------------
+
+upSampledTrainrela <- upSample(x = train,
+                               y = train$Pobre,
+                               ## keep the class variable name the same:
+                               yname = "Pobre")
+dim(train)
+
+dim(upSampledTrainrela)
+
+table(upSampledTrainrela$Pobre)
+
+mylogit_lasso_upsample_rela <- train(modelo_rela, 
+                                     data = upSampledTrainrela, 
+                                     method = "glmnet",
+                                     trControl = ctrl,
+                                     family = "binomial", 
+                                     metric = "Accuracy",
+                                     tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
+                                     preProcess = c("center", "scale")
+)
+mylogit_lasso_upsample_rela
+
+### Down sumpling ### ---------------------
+
+DownSampledTrainrela <- downSample(x = train,
+                                   y = train$Pobre,
+                                   ## keep the class variable name the same:
+                                   yname = "Pobre")
+dim(train)
+
+dim(DownSampledTrainrela)
+
+table(DownSampledTrainrela$Pobre)
+
+mylogit_lasso_downsample_rela <- train(modelo_rela, 
+                                       data = DownSampledTrainrela, 
+                                       method = "glmnet",
+                                       trControl = ctrl,
+                                       family = "binomial", 
+                                       metric = "Accuracy",
+                                       tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
+                                       preProcess = c("center", "scale")
+)
+mylogit_lasso_downsample_rela
+ ################### FIN MODELO RELA #############################
 mylogit_caret_m2 <- train(modelo2,
                           data = train, 
                           method = "glm",
@@ -524,68 +580,6 @@ metricas1 <- bind_rows(metricas_insample1, metricas_outsample1)
 metricas1 %>%
   kbl(digits = 2)  %>%
   kable_styling(full_width = T)
-
-### Logit Lasso ### -------------------
-#Lasso
-lambda_grid <- 10^seq(-4, 0.01, length = 10)
-
-mylogit_lasso <- train(modelo,
-                            data = train , 
-                            method = "glmnet",
-                            trControl = ctrl,
-                            family = "binomial", 
-                            metric = "Recall",
-                            tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
-                            preProcess = c("center", "scale")
-)
-mylogit_lasso
-
-### UP sumpling ### ----------------
-
-upSampledTrain <- upSample(x = hog_training_class,
-                           y = hog_training_class$Pobre,
-                           ## keep the class variable name the same:
-                           yname = "Pobre")
-dim(hog_training_class)
-
-dim(upSampledTrain)
-
-table(upSampledTrain$Pobre)
-
-mylogit_lasso_upsample <- train(modelo, 
-                                data = upSampledTrain, 
-                                method = "glmnet",
-                                trControl = ctrl,
-                                family = "binomial", 
-                                metric = "Recall",
-                                tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
-                                preProcess = c("center", "scale")
-)
-mylogit_lasso_upsample
-
-### Down sumpling ### ---------------------
-
-DownSampledTrain <- downSample(x = hog_training_class,
-                           y = hog_training_class$Pobre,
-                           ## keep the class variable name the same:
-                           yname = "Pobre")
-dim(hog_training_class)
-
-dim(DownSampledTrain)
-
-table(DownSampledTrain$Pobre)
-
-mylogit_lasso_downsample <- train(modelo, 
-                                data = DownSampledTrain, 
-                                method = "glmnet",
-                                trControl = ctrl,
-                                family = "binomial", 
-                                metric = "Recall",
-                                tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
-                                preProcess = c("center", "scale")
-)
-mylogit_lasso_downsample
-
 
 #OPTIMIZAR EL UMBRAL DE DECISIÓN ------
 thresholds <- seq(0, 1, length.out = 100)
