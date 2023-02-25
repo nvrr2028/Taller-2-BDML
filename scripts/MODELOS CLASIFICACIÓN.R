@@ -351,90 +351,100 @@ test_hogares$P5090 <- as.factor(test_hogares$P5090) # Tipo de tenencia como fact
 
 
 # CLASIFICACIÓN -------------------------------------
-#La variable que vamos a usar es Pobre 
 p_load(caret)
 
-#A CORRER MODELOS --------------
-### Primer modelo ### bases test_hogares & train_hogares
-summary(train_hogares$Pobre)
-set.seed(1234)
-# Partición de la base de datos train, con el objetivo de evaluar el performance de los modelos.
-inTrain <- createDataPartition(
-  y = train_hogares$Pobre,## Nuestra  
-  p = .7, ## Usamos 70%  de los datos en el conjunto de entrenamiento 
-  list = FALSE)
+# Dividimos train/test (70/30) usando caret
+set.seed(123)
+trainIndex <- createDataPartition(trainbasee$Pobre, p = 0.7)
+trainIndex <- trainIndex$Resample1
 
-train <- train_hogares[ inTrain,] # Set de datos de entrenamiento
-test  <- train_hogares[-inTrain,] # Set de datos de evaluación
-nrow(train) # El conjunto de entrenamiento contiene el 70% de la base original (115473/164960*100)
+trainbase <- trainbasee[trainIndex, ]
+testbase <- trainbasee[-trainIndex, ]
+
+# Analizamos que tan bien quedó partida la base           #literalmente mismas proporciones 
+prop.table(table(trainbasee$Pobre))
+prop.table(table(trainbase$Pobre))
+prop.table(table(testbase$Pobre))
+
+#Estandarizar 
+train_s <- train
+test_s <- test
+
+train_vn<- subset(trainbase, select =  c("P5130","P5140", "Ingtotug", "prop_P6585s1h", "prop_P6585s3h", "prop_P7510s3h", "prop_P7505h", "prop_P6920h", "prop_Desh", "prop_Och", "prop_contributivo", "prop_subsidiado", "prop_contributivo", "prop_especial", 
+                                         "prop_ningunoeduc", "prop_preescolar", "prop_basicaprimaria", "prop_basicasecundaria", "prop_media", "prop_superior", "prop_mayoriatiempotrabajo", "prop_mayoriatiempobuscandotrabajo", "prop_mayoriatiempoestudiando", 
+                                         "prop_mayoriatiempooficiohogar", "prop_mayoriatiempoincapacitado", "prop_obreroemplempresa", "prop_obreroemplgobierno", "prop_empldomestico", "prop_trabajadorcuentapropia", "prop_patronempleador", "prop_trabajadorsinremunfamilia", "prop_trabajadorsinremunempresa"))
+test_vn<- subset(testbase, select =  c("P5130","P5140", "Ingtotug", "prop_P6585s1h", "prop_P6585s3h", "prop_P7510s3h", "prop_P7505h", "prop_P6920h", "prop_Desh", "prop_Och", "prop_contributivo", "prop_subsidiado", "prop_contributivo", "prop_especial", 
+                                       "prop_ningunoeduc", "prop_preescolar", "prop_basicaprimaria", "prop_basicasecundaria", "prop_media", "prop_superior", "prop_mayoriatiempotrabajo", "prop_mayoriatiempobuscandotrabajo", "prop_mayoriatiempoestudiando", 
+                                       "prop_mayoriatiempooficiohogar", "prop_mayoriatiempoincapacitado", "prop_obreroemplempresa", "prop_obreroemplgobierno", "prop_empldomestico", "prop_trabajadorcuentapropia", "prop_patronempleador", "prop_trabajadorsinremunfamilia", "prop_trabajadorsinremunempresa"))
+
+escalador <- preProcess(train_vn,
+                        method = c("center", "scale"))
+train_vn_s <- predict(escalador, train_vn)
+
+escalador <- preProcess(test_vn,
+                        method = c("center", "scale"))
+test_vn_s <- predict(escalador, test_vn)
+
+#Tibblesss
+train_vn_s <- as_tibble(train_vn_s)
+test_vn_s <- as_tibble(test_vn_s)
+trainbase <- as_tibble(trainbase)
+testbase <- as_tibble(testbase)
+
+# MODELOS--------------------
+fmla <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
+                  prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
+                  prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
+                  prop_mayoriatiempotrabajo+prop_mayoriatiempobuscandotrabajo+prop_mayoriatiempoestudiando+
+                  prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
+                  prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
+                  prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa)
+
+fmlashort <- formula(Pobre~P5130+P5140+Depto+prop_P6585s1h+prop_P7510s3h+prop_P7505h+prop_Desh+prop_Och+prop_subsidiado+
+                       prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_mayoriatiempobuscandotrabajo)
 
 # Cross-validation
 ctrl <- trainControl(
   method = "cv", 
   number = 10) # número de folds
 
-# Analizamos que tan bien quedó partida la base
-prop.table(table(train_hogares$Pobre))
-prop.table(table(train$Pobre))
-prop.table(table(test$Pobre))
+# ELASTIC NET ---------------------------------------
+modelo1 <- train(fmla,
+                 data= trainbase,
+                 trcontrol= ctrl,
+                 preProcess = NULL,
+                 method = "glmnet")
 
-#Estandarizamos 
-#train_s <- train
-#test_s <- test
+# modelo1short <- train(fmlashort,            #comentado porque no me corrió :(
+#data= trainbase,
+#trcontrol= ctrl,
+#preProcess = NULL,
+#method = "glmnet")
 
-#variables_numericas <-  c("P5130","P5140", "Ingtotug", "prop_P6585s1h", "prop_P6585s3h", "prop_P7510s3h", "prop_P7505h", "prop_P6920h", "prop_Desh", "prop_Och", "prop_contributivo", "prop_subsidiado", "prop_contributivo", "prop_especial", "prop_ningunoeduc", "prop_preescolar", "prop_basicaprimaria", "prop_basicasecundaria", "prop_media", "prop_superior", "prop_mayoriatiempotrabajo", "prop_mayoriatiempobuscandotrabajo", "prop_mayoriatiempoestudiando", "prop_mayoriatiempooficiohogar", "prop_mayoriatiempoincapacitado", "prop_obreroemplempresa", "prop_obreroemplgobierno", "prop_empldomestico", "prop_trabajadorcuentapropia", "prop_patronempleador", "prop_trabajadorsinremunfamilia", "prop_trabajadorsinremunempresa") ###############
-#escalador <- preProcess(train[, variables_numericas],
-                        method = c("center", "scale"))
-#train_s[, variables_numericas ] <- predict(escalador, train[, variables_numericas, ])
-#test_s[, variables_numericas] <- predict(escalador, test[, variables_numericas])
+#tablita -----------
+p_load(kableExtra)
+y_hat_insample1 <- predict(modelo1, trainbase)
+y_hat_outsample1 <- predict(modelo1, testbase)
+probs_insample1 <- predict(modelo1, trainbase, type = "prob")[, "1", drop = T]
+probs_outsample1 <- predict(modelo1, testbase, type = "prob")[, "1", drop = T]
 
-#porque le gusta al profe
-#train_s <- as_tibble(train_s)
-#test_s <- as_tibble(test_s)
-#train <- as_tibble(train)
-#test <- as_tibble(test)
-
-# Fórmula de los modelos
-modelo <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
-                    prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
-                    prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
-                    prop_mayoriatiempotrabajo+prop_mayoriatiempobuscandotrabajo+prop_mayoriatiempoestudiando+
-                    prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
-                    prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
-                    prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa)
-
-#PRIMER MODELO 
-mylogit_caret_m1 <- train(modelo,
-                          data = train, 
-                          method = "glm",
-                          trControl = ctrl,
-                          family = "binomial", 
-                          metric = 'Recall')
-mylogit_caret_m1
-
-#TABLITA DE CÓMO NOS FUE -----------
-y_hat_insample1 <- predict(mylogit_caret_m1, train_s)
-y_hat_outsample1 <- predict(mylogit_caret_m1, test_s)
-probs_insample1 <- predict(mylogit_caret_m1, train_s, type = "prob")[, "1", drop = T]
-probs_outsample1 <- predict(mylogit_caret_m1, test_s, type = "prob")[, "1", drop = T]
-
-acc_insample1 <- Accuracy(y_pred = y_hat_insample1, y_true = train$Pobre)
-acc_outsample1 <- Accuracy(y_pred = y_hat_outsample1, y_true = test$Pobre)
+acc_insample1 <- Accuracy(y_pred = y_hat_insample1, y_true = trainbase$Pobre)
+acc_outsample1 <- Accuracy(y_pred = y_hat_outsample1, y_true = testbase$Pobre)
 
 pre_insample1 <- Precision(y_pred = y_hat_insample1, 
-                           y_true = train$Pobre, positive = 1)
+                           y_true = trainbase$Pobre, positive = 1)
 pre_outsample1 <- Precision(y_pred = y_hat_outsample1, 
-                            y_true = test$Pobre, positive = 1)
+                            y_true = testbase$Pobre, positive = 1)
 
 rec_insample1 <- Recall(y_pred = y_hat_insample1, 
-                        y_true = train$Pobre, positive = 1)
+                        y_true = trainbase$Pobre, positive = 1)
 rec_outsample1 <- Recall(y_pred = y_hat_outsample1, 
-                         y_true = test$Pobre, positive = 1)
+                         y_true = testbase$Pobre, positive = 1)
 
 f1_insample1 <- F1_Score(y_pred = y_hat_insample1, 
-                         y_true = train$Pobre, positive = 1)
+                         y_true = trainbase$Pobre, positive = 1)
 f1_outsample1 <- F1_Score(y_pred = y_hat_outsample1, 
-                          y_true = test$Pobre, positive = 1)
+                          y_true = testbase$Pobre, positive = 1)
 
 metricas_insample1 <- data.frame(Modelo = "Regresión logistica", 
                                  "Muestreo" = NA, 
