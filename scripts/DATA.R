@@ -305,7 +305,7 @@ test_hogares$P5010 <- as.factor(test_hogares$P5010) # Número de dormitorios com
 test_hogares$P5090 <- as.factor(test_hogares$P5090) # Tipo de tenencia como factor
 
 # Variable explicada Y 
-#      Ingtotug 
+#      Ingtotug: ingreso total de la unidad de gasto antes de imputación de arriendo a propietarios y usufructuarios
 #      Pobre (discreta) - Pobre=1 No pobre=0
 
 # Lista de posibles variables explicativas: 
@@ -353,14 +353,14 @@ test_hogares$P5090 <- as.factor(test_hogares$P5090) # Tipo de tenencia como fact
 
 ### Preparación
 coln <- c("Número de cuartos", "Número de dormitorios", "Tenencia de vivienda", "Número de personas", "Número de personas gasto", 
-          "Departamento", "Ingreso hogar", "Pobres", "Número de pobres", "Auxilio alimentación", "Auxilio familiar", 
+          "Departamento", "Ingreso hogar", "Pobre", "Auxilio alimentación", "Auxilio familiar", 
           "Recibieron dinero instituciones", "Recibieron dinero hogares", "Pensión", "Desempleado", "Empleado", 
           "Régimen subsidiado", "Régimen contributivo", "Régimen especial", "Ninguna educación", "Preescolar", 
           "Primaria", "Secundaria", "Media", "Superior", "Trabajando", "Buscando trabajo", "Estudiando", 
           "Oficios del hogar", "Incapacitado", "Empleado empresa privada", "Empleado gobierno", "Empleado doméstico", 
           "Independiente", "Patrón", "Empleado sin pago hogar", "Empleado sin pago empresa")
 base <- train_hogares %>% 
-  select(P5000:Npersug, Depto:Npobres, starts_with("prop_"))%>% 
+  select(P5000:Npersug, Depto:Pobres, starts_with("prop_"))%>% 
   select(-P5130, -P5140)
 colnames(base) <- coln
 
@@ -374,3 +374,4 @@ corrplot(res2$r, type="upper", order="hclust",
          p.mat = res2$p, sig.level = 0.05, insig = "blank", tl.col="black") # Las correlaciones no signitificativas se eliminan
 
 ### Análisis por variables
+
