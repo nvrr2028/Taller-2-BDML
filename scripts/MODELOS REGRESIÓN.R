@@ -485,29 +485,25 @@ write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 ### 3.4 Random Forest ---------------------------------------------------------------------------------
 
 # Nueva regresión, eliminando las variables que NO fueron seleccionadas por EN
-fmla_RF <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
-                  prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
-                  prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
-                  prop_mayoriatiempotrabajo+prop_mayoriatiempobuscandotrabajo+prop_mayoriatiempoestudiando+
-                  prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
-                  prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
-                  prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa)
+fmla_RF <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
+                     prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
+                     prop_trabajadorcuentapropia+prop_patronempleador)
 ctrl_RF <- trainControl(method = "cv",
                     number = 10, # Es recomendable correr 10
                     )
 
 #### Hiperparámetros
-mtry_grid <- expand.grid(mtry = seq(1, ncol(hog_training), 2))
+mtry_grid <- expand.grid(mtry = seq(1, 18, 2))
 mtry_grid
 
-ModeloRF <- caret::train(fmla, 
+ModeloRF <- caret::train(fmla_RF, 
                 data = hog_training, 
                 method = 'rf',
                 trControl = ctrl_RF,
                 metric="RMSE",
                 tuneGrid = mtry_grid,
                 preProcess = c("center", "scale"),
-                ntree=700)
+                ntree=500)
 
 ModeloRF #mtry es el número de predictores.
 plot(ModeloRF)
