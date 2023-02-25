@@ -12,15 +12,15 @@ rm(list = ls(all.names = TRUE))
 
 # Directorio de trabajo (cambiar según computador)
 setwd("C:/Users/nicol/Documents/GitHub/Repositorios/Taller-2-BDML")
-
-setwd("/Users/bray/Desktop/Big Data/Talleres/Taller-2-BDML")
+#setwd("/Users/bray/Desktop/Big Data/Talleres/Taller-2-BDML")
 
 # ------------------------------------------------------------------------------------ #
 # Cargar librerias.
 # ------------------------------------------------------------------------------------ #
 
 list.of.packages = c("pacman", "readr","tidyverse", "dplyr", "arsenal", "fastDummies", 
-                     "caret", "glmnet", "MLmetrics", "skimr", "plyr")
+                     "caret", "glmnet", "MLmetrics", "skimr", "plyr", "stargazer", 
+                     "ggplot2", "corrplot", "Hmisc")
 
 new.packages = list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -177,6 +177,7 @@ train_hogares$prop_trabajadorsinremunempresa    <- train_hogares$trabajadorsinre
 colnames(train_hogares)
 
 #1.3 Modificaciones adicionales 
+train_hogares$P5010[train_hogares$P5010>=10] <- 10
 train_hogares$Pobre <- as.factor(train_hogares$Pobre) # Pobre como factor
 train_hogares$Depto <- as.factor(train_hogares$Depto) # Departamento como factor
 train_hogares$P5000 <- as.factor(train_hogares$P5000) # Número de cuartos como factor
@@ -296,12 +297,80 @@ test_hogares$prop_patronempleador              <- test_hogares$patronempleador /
 test_hogares$prop_trabajadorsinremunfamilia    <- test_hogares$trabajadorsinremunfamilia / test_hogares$Orden
 test_hogares$prop_trabajadorsinremunempresa    <- test_hogares$trabajadorsinremunempresa / test_hogares$Orden
 
-#1.3 Modificaciones adicionales 
+#1.3 Modificaciones adicionales
+test_hogares$P5010[test_hogares$P5010>=10] <- 10
 test_hogares$Depto <- as.factor(test_hogares$Depto) # Departamento como factor
 test_hogares$P5000 <- as.factor(test_hogares$P5000) # Número de cuartos como factor
 test_hogares$P5010 <- as.factor(test_hogares$P5010) # Número de dormitorios como factor
 test_hogares$P5090 <- as.factor(test_hogares$P5090) # Tipo de tenencia como factor
 
+# Variable explicada Y 
+#      Ingtotug 
+#      Pobre (discreta) - Pobre=1 No pobre=0
+
+# Lista de posibles variables explicativas: 
+#      P5000 (discreta) - Incluyendo sala-comedor ¿de cuántos cuartos en total dispone este hogar?
+#      P5010 (discreta) - ¿En cuántos de esos cuartos duermen las personas de este hogar?
+#      P5090 (discreta) - La vivienda ocupada por este hogar es
+#      P5130 (continua) - Si tuviera que pagar arriendo por esta vivienda, ¿cuánto estima que tendría que pagar mensualmente?
+#      P5140 (continua) - ¿Cuánto pagan mensualmente por arriendo?
+#      Nper (continua) - Personas en el hogar
+#      Npersug (continua) - Número de personas en la unidad de gasto
+#      Depto (discreta) - Departamento
+#      prop_P6585s1h - Proporción de personas que recibieron un auxilio de alimentación en el hogar
+#      prop_P6585s3h - Proporción de personas que recibieron un auxilio familiar en el hogar
+#      prop_P7510s3h - Proporción de personas que recibieron dinero de instituciones en el hogar.
+#      prop_P7505h - Proporción de personas que recibieron dinero de otros hogares en el hogar.
+#      prop_P6920h - Proporción de personas en el hogar que estarían cotizando a pensión.
+#      prop_Desh - Proporción de personas en el hogar desempleadas.
+#      prop_Och - Proporción de personas en el hogar empleadas.  
+#      Npobres (continua) - Número de pobres
+#      prop_subsidiado - Proporción de personas en el hogar cotizantes al regimen subsidiado.                
+#      prop_contributivo - Proporción de personas en el hogar cotizantes al regimen contributivo.    
+#      prop_especial - Proporción de personas en el hogar cotizantes al regimen especial.              
+#      prop_ningunoeduc - Proporción de personas en el hogar con ningún nivel de educación.                 
+#      prop_preescolar - Proporción de personas en el hogar con nivel de educación preescolar.                 
+#      prop_basicaprimaria - Proporción de personas en el hogar con nivel de educación básica primaria.            
+#      prop_basicasecundaria - Proporción de personas en el hogar con nivel de educación básica secundaria.           
+#      prop_media - Proporción de personas en el hogar con nivel de educación media.                 
+#      prop_superior - Proporción de personas en el hogar con nivel de educación superior.            
+#      prop_mayoriatiempotrabajo - Proporción de personas en el hogar que pasaron la mayor parte del tiempo trabajando.       
+#      prop_mayoriatiempobuscandotrabajo - Proporción de personas en el hogar que pasaron la mayor parte del tiempo buscando trabajo.  
+#      prop_mayoriatiempoestudiando - Proporción de personas en el hogar que pasaron la mayor parte del tiempo estudiando.
+#      prop_mayoriatiempooficiohogar - Proporción de personas en el hogar que pasaron la mayor parte del tiempo haciendo oficios del hogar.   
+#      prop_mayoriatiempoincapacitado - Proporción de personas en el hogar que pasaron la mayor parte del tiempo incapacitado.
+#      prop_obreroemplempresa - Proporción de personas en el hogar que son empleados de una empresa privada.     
+#      prop_obreroemplgobierno - Proporción de personas en el hogar que son empleados del gobierno.              
+#      prop_empldomestico - Proporción de personas en el hogar que son empleados domésticos.               
+#      prop_trabajadorcuentapropia - Proporción de personas en el hogar que son cuenta propia. 
+#      prop_patronempleador - Proporción de personas en el hogar que son patrón.         
+#      prop_trabajadorsinremunfamilia - Proporción de personas en el hogar que son trabajadores de la familia sin remuneración.
+#      prop_trabajadorsinremunempresa - Proporción de personas en el hogar que son trabajadores de una empresa sin remuneración.
+
 # ------------------------------------------------------------------------------------ #
 # 3. Estadísticas descriptivas
 # ------------------------------------------------------------------------------------ #
+
+### Preparación
+coln <- c("Número de cuartos", "Número de dormitorios", "Tenencia de vivienda", "Número de personas", "Número de personas gasto", 
+          "Departamento", "Ingreso hogar", "Pobres", "Número de pobres", "Auxilio alimentación", "Auxilio familiar", 
+          "Recibieron dinero instituciones", "Recibieron dinero hogares", "Pensión", "Desempleado", "Empleado", 
+          "Régimen subsidiado", "Régimen contributivo", "Régimen especial", "Ninguna educación", "Preescolar", 
+          "Primaria", "Secundaria", "Media", "Superior", "Trabajando", "Buscando trabajo", "Estudiando", 
+          "Oficios del hogar", "Incapacitado", "Empleado empresa privada", "Empleado gobierno", "Empleado doméstico", 
+          "Independiente", "Patrón", "Empleado sin pago hogar", "Empleado sin pago empresa")
+base <- train_hogares %>% 
+  select(P5000:Npersug, Depto:Npobres, starts_with("prop_"))%>% 
+  select(-P5130, -P5140)
+colnames(base) <- coln
+
+### Estadística descriptiva: análisis preliminar
+stargazer(base, header=FALSE, type='latex',title="Variable")
+
+### Mapa de correlaciones 
+corrm <- base
+res2 <- rcorr(as.matrix(corrm)) # Coeficientes de correlación
+corrplot(res2$r, type="upper", order="hclust", 
+         p.mat = res2$p, sig.level = 0.05, insig = "blank", tl.col="black") # Las correlaciones no signitificativas se eliminan
+
+### Análisis por variables
