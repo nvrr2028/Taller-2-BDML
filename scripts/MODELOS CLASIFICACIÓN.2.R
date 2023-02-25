@@ -621,7 +621,7 @@ ggplot(opt_t, aes(x = t, y = F1)) +
              color = "red") +
   labs(x = "Threshold")
 
-# tablita Convertimos la probabilidad en una predicción ------
+# tablita  ------
 y_hat_insample4 <- as.numeric(probs_insample1 > mejor_t)
 y_hat_outsample4 <- as.numeric(probs_outsample1 > mejor_t)
 
@@ -681,7 +681,7 @@ prob_umbral <- ifelse(y_hat_umbral<test_hogares$Lp, 1, 0)
 
 # Exportar para prueba en Kaggle
 Kaggle_ModeloUmbral <- data.frame(id=test_hogares$id, pobre=prob_umbral)
-write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
+write.csv(Kaggle_ModeloUmbral,"./stores/Kaggle_ModeloUmbral.csv", row.names = FALSE)
 # Accuracy: 
 
 # CAMBIAR PESOS FUNCIÓN DE PÉRDIDA --------------
@@ -697,6 +697,7 @@ modelo_pesos <- train(fmla,
                       weights = pesos, 
                       preProcess = c("center", "scale"))
 
+#tablita -------------
 y_hat_insample5 <- predict(modelo_pesos, trainbase)
 y_hat_outsample5 <- predict(modelo_pesos, testbase)
 
