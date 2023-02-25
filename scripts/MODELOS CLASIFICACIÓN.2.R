@@ -692,7 +692,7 @@ write.csv(Kaggle_ModeloUmbral,"./stores/Kaggle_ModeloUmbral.csv", row.names = FA
 # Accuracy: 
 
 # CAMBIAR PESOS FUNCIÓN DE PÉRDIDA --------------
-# Le vamos a decir al modelo que valore predecir bien a los infieles 2 veces más que predecir a los fieles
+# Le vamos a decir al modelo que valore predecir bien a los pobres 2 veces más que predecir a los no pobres
 pesos <- as.numeric(trainbase$Pobre)
 pesos[trainbase$Pobre == 1] <- 3
 pesos[trainbase$Pobre == 0] <- 1
@@ -751,4 +751,215 @@ write.csv(Kaggle_Modelopesos,"./stores/Kaggle_ModeloPesos.csv", row.names = FALS
 
 
 # RANDOM FOREST ---------------
-# BOOSTING train
+library(pacman)
+p_load(ipred, Metrics, rpart.plot, tidyverse,rpart,caret)
+
+#fiveStats <- function(...) c(twoClassSummary(...), defaultSummary(...))
+#ctrl<- trainControl(method = "cv",                                              #Mantener el anterior 
+                    number = 10,
+                    summaryFunction = fiveStats,
+                    classProbs = TRUE,
+                    verbose=FALSE,
+                    savePredictions = T)
+
+sqrt(ncol(trainbase)-1)
+mtry_grid <- expand.grid(mtry = seq(1, ceiling(ncol(trainbase)-1), 1))
+
+p_load(randomForest)
+set.seed(101)
+forest <- train(fmla, 
+                data = trainbase, 
+                method = "rf",
+                trControl = ctrl,
+                metric = "Accuracy",
+                tuneGrid = mtry_grid,
+                ntree=1000
+)
+
+plot(forest)                #Número de predictores para una mejor accuracy                                                         #
+forest$finalModel           #cómo nos fue?
+varImp(bosque,scale=TRUE)   #quitamos alguna variable?
+# BOOSTING train------------
+p_load(fastAdaboost)
+
+M_grid<- expand.grid(nIter=c(10,50,100,150,200),method="adaboost")
+M_grid
+
+set.seed(1011)
+adaboost_res <- train(fmla,
+                      data = trainbase, 
+                      method = "adaboost", 
+                      trControl = ctrl,
+                      metric = "Accuracy",
+                      tuneGrid = M_grid
+)
+
+adaboost_res
+pred_ada<-predict(adaboost_res,test)
+confusionMatrix(pred_ada,test$Default)
+
+#a la lucas 
+# Creamos una grilla para tunear el random forest
+tunegrid_rf <- expand.grid(mtry = c(3, 5, 10), 
+                           min.node.size = c(10, 30, 50,
+                                             70, 100),
+                           splitrule = "variance")
+
+modelo2_rf <- train(fmla ,
+                 data = trainbase, 
+                 method = "ranger", 
+                 trControl = ctrl,
+                 metric = 'Accuracy', 
+                 tuneGrid = tunegrid_rf)
+plot(modelo2_rf)
+
+y_hat_insamplerf = predict(modelo2_rf, newdata = trainbase)
+y_hat_outsamplerf = predict(modelo2_rf, newdata = testbase)
+
+acc_insamplerf <- Accuracy(y_pred = y_hat_insamplerf, y_true = trainbase$Pobre)
+acc_outsamplerf <- Accuracy(y_pred = y_hat_outsamplerf, y_true = testbase$Pobre)
+
+pre_insamplerf <- Precision(y_pred = y_hat_insamplerf, y_true = trainbase$Pobre, positive = 1)
+pre_outsamplerf <- Precision(y_pred = y_hat_outsamplerf, y_true = testbase$Pobre, positive = 1)
+
+rec_insamplerf <- Recall(y_pred = y_hat_insamplerf, y_true = trainbase$Pobre, positive = 1)
+rec_outsamplerf <- Recall(y_pred = y_hat_outsamplerf, y_true = testbase$Pobre, positive = 1)
+
+f1_insamplerf <- F1_Score(y_pred = y_hat_insamplerf, y_true = trainbase$Pobre, positive = 1)
+f1_outsamplerf <- F1_Score(y_pred = y_hat_outsamplerf, y_true = testbase$Pobre, positive = 1)
+
+metricas_insamplerf <- data.frame(Modelo = "Random Forest", 
+                                 "Muestreo" = "Cambiar función de costo", 
+                                 "Evaluación" = "Dentro de muestra",
+                                 "Accuracy" = acc_insamplerf,
+                                 "Precision - PPV" = pre_insamplerf,
+                                 "Recall - TPR - Sensitivity" = rec_insamplerf,
+                                 "F1" = f1_insamplerf)
+
+metricas_outsamplerf <- data.frame(Modelo = "Random Forest", 
+                                  "Muestreo" = "Cambiar función de costo", 
+                                  "Evaluación" = "Fuera de muestra",
+                                  "Accuracy" = acc_outsamplerf,
+                                  "Precision - PPV" = pre_outsamplerf,
+                                  "Recall - TPR - Sensitivity" = rec_outsamplerf,
+                                  "F1" = f1_outsamplerf)
+
+metricasrf <- bind_rows(metricas_insamplerf, metricas_outsamplerf)
+metricas <- bind_rows(metricas, metricasrf)
+metricas %>%
+  kbl(digits = 2)  %>%
+  kable_styling(full_width = T)
+
+## Predicción 2: Predicciones con test_hogares
+pred_test_Modelorf<- predict(modelo_rf, newdata = test_hogares)
+
+# Exportar para prueba en Kaggle
+Kaggle_Modelorf <- data.frame(id=test_hogares$id, pobre=pred_test_rf)
+write.csv(Kaggle_Modelorf,"./stores/Kaggle_ModeloRFc.csv", row.names = FALSE)
+
+
+# GRADIENT BOOSTING TREES--------------
+p_load(gbm)
+
+
+grid_gbm<-expand.grid(n.trees=c(200,300,500),interaction.depth=c(1,2,3),shrinkage=c(0.01,0.001),n.minobsinnode
+                      =c(10,30))
+#n.trees (# Boosting Iterations)
+#interaction.depth (Max Tree Depth)
+#shrinkage (Shrinkage)
+# n.minobsinnode (Min. Terminal Node Size) 
+
+grid_gbm
+
+
+set.seed(1011)
+gbm_res <- train(fmla,
+                 data = trainbase, 
+                 method = "gbm", 
+                 trControl = ctrl,
+                 tuneGrid=grid_gbm,
+                 metric = "Accuracy"
+)  
+
+gbm_res$bestTune
+pred_gbm<-predict(gbm_res,test)
+confusionMatrix(pred_gbm,test$Default)
+
+#a la lucas 
+# Creamos una grilla para tunear el gbm
+tunegrid_gbm <- expand.grid(learn_rate = c(0.1, 0.01, 0.001),
+                            ntrees = 50,
+                            max_depth = 2,
+                            col_sample_rate = 1,
+                            min_rows = 70) 
+
+
+# Truco de instalación
+if ("package:h2o" %in% search()) {detach("package:h2o", unload=TRUE) }
+if ("h2o" %in% rownames(installed.packages())) {remove.packages("h2o")}
+ library(pacman)
+ p_load("RCurl","jsonlite") 
+ install.packages("h2o", type = "source", 
+                  repos = (c("http://h2o-release.s3.amazonaws.com/h2o/latest_stable_R")))
+
+# Inicializamos el modelo
+library(h2o)
+# YO le voy a poner 10 nucleos porque los tengo. Si usted tiene menos o más, pues cambie el parámetro
+h2o.init(nthreads = 10)
+
+# Esta chimbada es bien demorada
+set.seed(123)
+library(caret)
+modelo2GBT <- train(fmla,
+                 data = trainbase, 
+                 method = "gbm_h2o", 
+                 trControl = cv3,
+                 metric = 'Accuracy', 
+                 tuneGrid = tunegrid_gbm) 
+
+# Visualicemos el mejor modelo
+plot(modelo2GBT)
+
+y_hat_insamplegbt <- predict(modelo2GBT, newdata = trainbase) 
+y_hat_outsamplegbt = predict(modelo2GBT, newdata = testbase)
+
+acc_insamplegbt <- Accuracy(y_pred = y_hat_insamplegbt, y_true = trainbase$Pobre)
+acc_outsamplegbt <- Accuracy(y_pred = y_hat_outsamplegbt, y_true = testbase$Pobre)
+
+pre_insamplegbt <- Precision(y_pred = y_hat_insamplegbt, y_true = trainbase$Pobre, positive = 1)
+pre_outsamplegbt <- Precision(y_pred = y_hat_outsamplegbt, y_true = testbase$Pobre, positive = 1)
+
+rec_insamplegbt <- Recall(y_pred = y_hat_insamplegbt, y_true = trainbase$Pobre, positive = 1)
+rec_outsamplegbt <- Recall(y_pred = y_hat_outsamplegbt, y_true = testbase$Pobre, positive = 1)
+
+f1_insamplegbt <- F1_Score(y_pred = y_hat_insamplegbt, y_true = trainbase$Pobre, positive = 1)
+f1_outsamplegbt <- F1_Score(y_pred = y_hat_outsamplegbt, y_true = testbase$Pobre, positive = 1)
+
+metricas_insamplegbt <- data.frame(Modelo = "Gradient Boosting tree", 
+                                  "Muestreo" = "Cambiar función de costo", 
+                                  "Evaluación" = "Dentro de muestra",
+                                  "Accuracy" = acc_insamplegbt,
+                                  "Precision - PPV" = pre_insamplegbt,
+                                  "Recall - TPR - Sensitivity" = rec_insamplegbt,
+                                  "F1" = f1_insamplegbt)
+
+metricas_outsamplerf <- data.frame(Modelo = "Random Forest", 
+                                   "Muestreo" = "Cambiar función de costo", 
+                                   "Evaluación" = "Fuera de muestra",
+                                   "Accuracy" = acc_outsamplegbt,
+                                   "Precision - PPV" = pre_outsamplegbt,
+                                   "Recall - TPR - Sensitivity" = rec_outsamplegbt,
+                                   "F1" = f1_outsamplegbt)
+
+metricasgbt <- bind_rows(metricas_insamplegbt, metricas_outsamplegbt)
+metricas <- bind_rows(metricas, metricasgbt)
+metricas %>%
+  kbl(digits = 2)  %>%
+  kable_styling(full_width = T)
+
+## Predicción 2: Predicciones con test_hogares
+pred_test_Modelogbt<- predict(modelo_gbt, newdata = test_hogares)
+
+# Exportar para prueba en Kaggle
+Kaggle_Modelogbt <- data.frame(id=test_hogares$id, pobre=pred_test_gbt)
+write.csv(Kaggle_Modelogbt,"./stores/Kaggle_ModeloGBTc.csv", row.names = FALSE)
