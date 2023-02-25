@@ -21,7 +21,7 @@ setwd("/Users/bray/Desktop/Big Data/Talleres/Taller-2-BDML")
 
 list.of.packages = c("pacman", "readr","tidyverse", "dplyr", "arsenal", "fastDummies", 
                      "caret", "glmnet", "MLmetrics", "skimr", "plyr", "stargazer", "jtools", 
-                     "Metrics", "writexl", "yardstick","knitr")
+                     "Metrics", "writexl", "yardstick","knitr","fastAdaboost","randomForest","gbm")
 
 new.packages = list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -358,7 +358,7 @@ set.seed(123)
 trainIndex <- createDataPartition(trainbasee$Pobre, p = 0.7)
 trainIndex <- trainIndex$Resample1
 
-trainbase <- trainbasee[trainIndex, ]
+trainbase <- trainbase[trainIndex, ]
 testbase <- trainbasee[-trainIndex, ]
 
 # Analizamos que tan bien quedó partida la base           #literalmente mismas proporciones 
@@ -615,5 +615,84 @@ for (t in thresholds) {
 
 mejor_t <-  opt_t$t[which(opt_t$F1 == max(opt_t$F1, na.rm = T))]
 
+##################### Ramdom forest ##########################
+p_load(randomForest)
+
+fiveStats <- function(...) c(twoClassSummary(...), defaultSummary(...))
+ctrl<- trainControl(method = "cv",
+                    number = 5,
+                    summaryFunction = fiveStats,
+                    classProbs = TRUE,
+                    verbose=FALSE,
+                    savePredictions = T)
+
+set.seed(1011)
+forest <- train(fmla, 
+                data = train, 
+                method = "rf",
+                trControl = ctrl,
+                metric="Accuracy",
+)
+
+#mtry_grid <- expand.grid(mtry = seq(1, ceiling(ncol(train)-1), 1)) #Randomly Selected Predictors)
+mtry_grid<-expand.grid(mtry =c(8,10,12))
+
+set.seed(1011)
+bosque <- train(fmla, 
+                data = train, 
+                method = "rf",
+                trControl = ctrl,
+                metric="Accuracy",
+                tuneGrid = mtry_grid,
+                ntree=1000)
+bosque
+bosque$finalModel
+bosque_pred <- predict(bosque, newdata = test, type="raw")
+confusionMatrix(data = bosque_pred, reference = test$Pobre)
+
+############# boosted trees ####################
+p_load(fastAdaboost)
+M_grid<- expand.grid(nIter=c(10,50,100),method="adaboost")
+M_grid
+
+adaboost_res <- train(fmla,
+                      data = train, 
+                      method = "adaboost", 
+                      trControl = ctrl,
+                      metric = "Accuracy",
+                      tuneGrid = M_grid
+)
+adaboost_res
+
+
+pred_ada<-predict(adaboost_res,test)
+confusionMatrix(pred_ada,test$Pobre)
+
+
+################ Traditional GBM ###################
+
+p_load(gbm)
+
+grid_gbm<-expand.grid(n.trees=c(200,300,500),interaction.depth=c(1,2,3),shrinkage=c(0.01,0.001),n.minobsinnode
+                      =c(10,30))
+#n.trees (# Boosting Iterations)
+#interaction.depth (Max Tree Depth)
+#shrinkage (Shrinkage)
+# n.minobsinnode (Min. Terminal Node Size) 
+
+grid_gbm
+gbm_res <- train(fmla,
+                 data = train, 
+                 method = "gbm", 
+                 trControl = ctrl,
+                 tuneGrid=grid_gbm,
+                 metric = "Accuracy"
+)            
+
+
+gbm_res$bestTune
+
+pred_gbm<-predict(gbm_res,test)
+confusionMatrix(pred_gbm,test$Pobre)
 
 
