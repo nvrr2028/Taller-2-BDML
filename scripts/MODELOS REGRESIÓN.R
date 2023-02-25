@@ -19,7 +19,7 @@ setwd("C:/Users/nicol/Documents/GitHub/Repositorios/Taller-2-BDML")
 
 list.of.packages = c("pacman", "readr","tidyverse", "dplyr", "arsenal", "fastDummies", 
                      "caret", "glmnet", "MLmetrics", "skimr", "plyr", "stargazer", "jtools", 
-                     "Metrics", "writexl", "yardstick")
+                     "Metrics", "writexl", "yardstick", "randomForest")
 
 new.packages = list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -369,7 +369,7 @@ nrow(hog_training) # El conjunto de entrenamiento contiene el 70% de la base ori
 # Cross-validation
 ctrl <- trainControl(
   method = "cv", 
-  number = 7) # número de folds
+  number = 10) # número de folds
 
 # Fórmula de los modelos
 fmla <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
@@ -469,7 +469,7 @@ pob1_ModeloEN <- ifelse(pred_test1_ModeloEN<hog_testing$Lp, 1, 0)
 
 # Evaluación de clasificación
 eva_ModeloEN <- data.frame(obs=as.factor(hog_testing$Pobre), pred=as.factor(pob1_ModeloEN)) # Data frame con observados y predicciones
-confmatrix_ModeloEN <- confusionMatrix(data = as.factor(pob1_ModeloEN), reference = as.factor(hog_testing$Pobre)) ; confmatrix_ModeloRL # Matriz de confusión
+confmatrix_ModeloEN <- confusionMatrix(data = as.factor(pob1_ModeloEN), reference = as.factor(hog_testing$Pobre)) ; confmatrix_ModeloEN # Matriz de confusión
 
 ## Predicción 2: Predicciones con test_hogares
 pred_test2_ModeloEN <- predict(ModeloEN, newdata = test_hogares)
@@ -484,6 +484,55 @@ write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 
 ### 3.4 Random Forest ---------------------------------------------------------------------------------
 
+# Nueva regresión, eliminando las variables que NO fueron seleccionadas por EN
+fmla_RF <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
+                     prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
+                     prop_trabajadorcuentapropia+prop_patronempleador)
+ctrl_RF <- trainControl(method = "cv",
+                    number = 10, # Es recomendable correr 10
+                    )
+
+#### Hiperparámetros
+mtry_grid <- expand.grid(mtry = seq(1, 18, 2))
+mtry_grid
+
+ModeloRF <- caret::train(fmla_RF, 
+                data = hog_training, 
+                method = 'rf',
+                trControl = ctrl_RF,
+                metric="RMSE",
+                tuneGrid = mtry_grid,
+                preProcess = c("center", "scale"),
+                ntree=500)
+
+ModeloRF #mtry es el número de predictores.
+plot(ModeloRF)
+ModeloRF$finalModel
+
+### Variable Importance
+varImp(ModeloRF,scale=TRUE)
+
+## Predicción 1: Predicciones con hog_testing
+pred_test1_ModeloRF <- predict(ModeloRF, newdata = hog_testing, type="raw")
+eva_ModeloRF <- data.frame(obs=hog_testing$Ingtotug, pred=pred_test1_ModeloRF) # Data frame con observados y predicciones
+metrics_ModeloRF <- metrics(eva_ModeloRF, obs, pred); metrics_ModeloRF # Cálculo del medidas de precisión
+
+# Identificación de pobres y no pobres en hog_testing
+pob1_ModeloRF <- ifelse(pred_test1_ModeloRF<hog_testing$Lp, 1, 0)
+
+# Evaluación de clasificación
+eva_ModeloRF <- data.frame(obs=as.factor(hog_testing$Pobre), pred=as.factor(pob1_ModeloRF)) # Data frame con observados y predicciones
+confmatrix_ModeloRF <- confusionMatrix(data = as.factor(pob1_ModeloRF), reference = as.factor(hog_testing$Pobre)) ; confmatrix_ModeloRF # Matriz de confusión
+
+## Predicción 2: Predicciones con test_hogares
+pred_test2_ModeloRF <- predict(ModeloRF, newdata = test_hogares)
+
+# Identificación de pobres y no pobres en test_hogares
+pob2_ModeloRF <- ifelse(pred_test2_ModeloEN<test_hogares$Lp, 1, 0)
+
+# Exportar para prueba en Kaggle
+Kaggle_ModeloEN <- data.frame(id=test_hogares$id, pobre=pob2_ModeloRF)
+write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 
 
 ### 3.5 AdaBoosting -----------------------------------------------------------------------------------
