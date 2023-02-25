@@ -403,6 +403,9 @@ fmla <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h
 fmlashort <- formula(Pobre~P5130+P5140+Depto+prop_P6585s1h+prop_P7510s3h+prop_P7505h+prop_Desh+prop_Och+prop_subsidiado+
                        prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_mayoriatiempobuscandotrabajo)
 
+modelo_rela <- formula(Pobre ~prop_subsidiado+prop_contributivo+prop_especial+
+                         prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+
+                         prop_basicasecundaria+prop_media+prop_superior)
 # Cross-validation
 ctrl <- trainControl(
   method = "cv", 
@@ -415,38 +418,7 @@ modelo1 <- train(fmla,
                  preProcess = NULL,
                  method = "glmnet")
 
-# modelo1short <- train(fmlashort,            #comentado porque no me corrió :(
-#data= trainbase,
-#trcontrol= ctrl,
-#preProcess = NULL,
-#method = "glmnet")
 
-#variables_numericas <-  c("P5130","P5140", "Ingtotug", "prop_P6585s1h", "prop_P6585s3h", "prop_P7510s3h", "prop_P7505h", "prop_P6920h", "prop_Desh", "prop_Och", "prop_contributivo", "prop_subsidiado", "prop_contributivo", "prop_especial", "prop_ningunoeduc", "prop_preescolar", "prop_basicaprimaria", "prop_basicasecundaria", "prop_media", "prop_superior", "prop_mayoriatiempotrabajo", "prop_mayoriatiempobuscandotrabajo", "prop_mayoriatiempoestudiando", "prop_mayoriatiempooficiohogar", "prop_mayoriatiempoincapacitado", "prop_obreroemplempresa", "prop_obreroemplgobierno", "prop_empldomestico", "prop_trabajadorcuentapropia", "prop_patronempleador", "prop_trabajadorsinremunfamilia", "prop_trabajadorsinremunempresa") ###############
-#escalador <- preProcess(train[, variables_numericas],
-                      ##  method = c("center", "scale"))
-#train_s[, variables_numericas ] <- predict(escalador, train[, variables_numericas, ])
-#test_s[, variables_numericas] <- predict(escalador, test[, variables_numericas])
-
-#porque le gusta al profe
-#train_s <- as_tibble(train_s)
-#test_s <- as_tibble(test_s)
-#train <- as_tibble(train)
-#test <- as_tibble(test)
-
-
-
-# Fórmula de los modelos
-modelo1 <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
-                    prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
-                    prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
-                    prop_mayoriatiempotrabajo+prop_mayoriatiempobuscandotrabajo+prop_mayoriatiempoestudiando+
-                    prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
-                    prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
-                    prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa)
-
-modelo_rela <- formula(Pobre ~ scale(prop_subsidiado) + scale(prop_contributivo) + scale(prop_especial) +
-                         scale(prop_ningunoeduc) + scale(prop_preescolar) + scale(prop_basicaprimaria) +
-                         scale(prop_basicasecundaria) + scale(prop_media) + scale(prop_superior))
 
 ###################################### modelo rela ##########################################
 mylogit_caret_rela <- train(modelo_rela,
