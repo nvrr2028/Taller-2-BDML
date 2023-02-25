@@ -21,7 +21,11 @@ setwd('C:/Users/sofia/OneDrive/Documentos/GitHub/Taller-2-BDML')
 
 list.of.packages = c("pacman", "readr","tidyverse", "dplyr", "arsenal", "fastDummies", 
                      "caret", "glmnet", "MLmetrics", "skimr", "plyr", "stargazer", "jtools", 
+<<<<<<< HEAD
+                     "Metrics", "writexl", "yardstick","knitr","fastAdaboost","randomForest","gbm")
+=======
                      "Metrics", "writexl", "yardstick")
+>>>>>>> e6c1a39023257ddcbcf9326279956ef11adf75fd
 
 new.packages = list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -358,7 +362,7 @@ set.seed(123)
 trainIndex <- createDataPartition(trainbasee$Pobre, p = 0.7)
 trainIndex <- trainIndex$Resample1
 
-trainbase <- trainbasee[trainIndex, ]
+trainbase <- trainbase[trainIndex, ]
 testbase <- trainbasee[-trainIndex, ]
 
 # Analizamos que tan bien quedó partida la base           #literalmente mismas proporciones 
@@ -403,6 +407,9 @@ fmla <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h
 fmlashort <- formula(Pobre~P5130+P5140+Depto+prop_P6585s1h+prop_P7510s3h+prop_P7505h+prop_Desh+prop_Och+prop_subsidiado+
                        prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_mayoriatiempobuscandotrabajo)
 
+modelo_rela <- formula(Pobre ~prop_subsidiado+prop_contributivo+prop_especial+
+                         prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+
+                         prop_basicasecundaria+prop_media+prop_superior)
 # Cross-validation
 ctrl <- trainControl(
   method = "cv", 
@@ -415,12 +422,152 @@ modelo1 <- train(fmla,
                  preProcess = NULL,
                  method = "glmnet")
 
+<<<<<<< HEAD
+
+
+###################################### modelo rela ##########################################
+mylogit_caret_rela <- train(modelo_rela,
+                          data = train, 
+                          method = "glm",
+                          trControl = ctrl,
+                          family = "binomial", 
+                          metric = 'Accuracy')
+mylogit_caret_rela
+
+#TABLITA DE CÓMO NOS FUE -----------
+y_hat_insamplerela <- predict(mylogit_caret_rela, train)
+y_hat_outsamplerela <- predict(mylogit_caret_rela, test)
+probs_insamplerela <- predict(mylogit_caret_rela, train, type = "prob")[, "1", drop = T]
+probs_outsamplerela <- predict(mylogit_caret_rela, test, type = "prob")[, "1", drop = T]
+
+acc_insamplerela <- Accuracy(y_pred = y_hat_insamplerela, y_true = train$Pobre)
+acc_outsamplerela <- Accuracy(y_pred = y_hat_outsamplerela, y_true = test$Pobre)
+
+pre_insamplerela <- Precision(y_pred = y_hat_insamplerela, 
+                           y_true = train$Pobre, positive = 1)
+pre_outsamplerela <- Precision(y_pred = y_hat_outsamplerela, 
+                            y_true = test$Pobre, positive = 1)
+
+rec_insamplerela <- Recall(y_pred = y_hat_insamplerela, 
+                        y_true = train$Pobre, positive = 1)
+rec_outsamplerela <- Recall(y_pred = y_hat_outsamplerela, 
+                         y_true = test$Pobre, positive = 1)
+
+f1_insamplerela <- F1_Score(y_pred = y_hat_insamplerela, 
+                         y_true = train$Pobre, positive = 1)
+f1_outsamplerela <- F1_Score(y_pred = y_hat_outsamplerela, 
+                          y_true = test$Pobre, positive = 1)
+
+metricas_insamplerela <- data.frame(Modelo = "Regresión logistica Modelo rela", 
+                                 "Muestreo" = NA, 
+                                 "Evaluación" = "Dentro de muestra",
+                                 "Accuracy" = acc_insamplerela,
+                                 "Precision - PPV" = pre_insamplerela,
+                                 "Recall - TPR - Sensitivity" = rec_insamplerela,
+                                 "F1" = f1_insamplerela)
+
+metricas_outsamplerela <- data.frame(Modelo = "Regresión logistica", 
+                                  "Muestreo" = NA, 
+                                  "Evaluación" = "Fuera de muestra",
+                                  "Accuracy" = acc_outsamplerela,
+                                  "Precision - PPV" = pre_outsamplerela,
+                                  "Recall - TPR - Sensitivity" = rec_outsamplerela,
+                                  "F1" = f1_outsamplerela)
+
+metricasrela <- bind_rows(metricas_insamplerela, metricas_outsamplerela)
+metricasrela 
+
+lambda_grid <- 10^seq(-4, 0.01, length = 100)
+
+mylogit_lasso_rela <- train(modelo_rela,
+                            data = train , 
+                            method = "glmnet",
+                            trControl = ctrl,
+                            family = "binomial", 
+                            metric = "Accuracy",
+                            tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
+                            preProcess = c("center", "scale")
+)
+mylogit_lasso_rela
+
+### UP sumpling ### ----------------
+
+upSampledTrainrela <- upSample(x = train,
+                               y = train$Pobre,
+                               ## keep the class variable name the same:
+                               yname = "Pobre")
+dim(train)
+
+dim(upSampledTrainrela)
+
+table(upSampledTrainrela$Pobre)
+
+mylogit_lasso_upsample_rela <- train(modelo_rela, 
+                                     data = upSampledTrainrela, 
+                                     method = "glmnet",
+                                     trControl = ctrl,
+                                     family = "binomial", 
+                                     metric = "Accuracy",
+                                     tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
+                                     preProcess = c("center", "scale")
+)
+mylogit_lasso_upsample_rela
+
+### Down sumpling ### ---------------------
+
+DownSampledTrainrela <- downSample(x = train,
+                                   y = train$Pobre,
+                                   ## keep the class variable name the same:
+                                   yname = "Pobre")
+dim(train)
+
+dim(DownSampledTrainrela)
+
+table(DownSampledTrainrela$Pobre)
+
+mylogit_lasso_downsample_rela <- train(modelo_rela, 
+                                       data = DownSampledTrainrela, 
+                                       method = "glmnet",
+                                       trControl = ctrl,
+                                       family = "binomial", 
+                                       metric = "Accuracy",
+                                       tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
+                                       preProcess = c("center", "scale")
+)
+mylogit_lasso_downsample_rela
+ ################### FIN MODELO RELA #############################
+mylogit_caret_m2 <- train(modelo2,
+                          data = train, 
+                          method = "glm",
+                          trControl = ctrl,
+                          family = "binomial", 
+                          metric = 'Recall')
+mylogit_caret_m2
+
+mylogit_caret_m3 <- train(modelo3,
+                          data = train, 
+                          method = "glm",
+                          trControl = ctrl,
+                          family = "binomial", 
+                          metric = 'Recall')
+mylogit_caret_m3
+
+#TABLITA DE CÓMO NOS FUE -----------
+y_hat_insample1 <- predict(mylogit_caret_m1, train_s)
+y_hat_outsample1 <- predict(mylogit_caret_m1, test_s)
+probs_insample1 <- predict(mylogit_caret_m1, train_s, type = "prob")[, "1", drop = T]
+probs_outsample1 <- predict(mylogit_caret_m1, test_s, type = "prob")[, "1", drop = T]
+
+acc_insample1 <- Accuracy(y_pred = y_hat_insample1, y_true = train$Pobre)
+acc_outsample1 <- Accuracy(y_pred = y_hat_outsample1, y_true = test$Pobre)
+=======
 # modelo1short <- train(fmlashort,            #comentado porque no me corrió :(
 #data= trainbase,
 #trcontrol= ctrl,
 #preProcess = NULL,
 #method = "glmnet")
 
+>>>>>>> e6c1a39023257ddcbcf9326279956ef11adf75fd
 #tablita -----------
 p_load(kableExtra)
 y_hat_insample1 <- predict(modelo1, trainbase)
@@ -467,6 +614,8 @@ metricas1 %>%
   kbl(digits = 2)  %>%
   kable_styling(full_width = T)
 
+<<<<<<< HEAD
+=======
 ### Logit Lasso ### -------------------
 #Lasso
 lambda_grid <- 10^seq(-4, 0.01, length = 10)
@@ -529,6 +678,7 @@ mylogit_lasso_downsample <- train(modelo,
 mylogit_lasso_downsample
 
 
+>>>>>>> e6c1a39023257ddcbcf9326279956ef11adf75fd
 #OPTIMIZAR EL UMBRAL DE DECISIÓN ------
 thresholds <- seq(0, 1, length.out = 100)
 opt_t <- data.frame()
@@ -543,5 +693,84 @@ for (t in thresholds) {
 
 mejor_t <-  opt_t$t[which(opt_t$F1 == max(opt_t$F1, na.rm = T))]
 
+##################### Ramdom forest ##########################
+p_load(randomForest)
+
+fiveStats <- function(...) c(twoClassSummary(...), defaultSummary(...))
+ctrl<- trainControl(method = "cv",
+                    number = 5,
+                    summaryFunction = fiveStats,
+                    classProbs = TRUE,
+                    verbose=FALSE,
+                    savePredictions = T)
+
+set.seed(1011)
+forest <- train(fmla, 
+                data = train, 
+                method = "rf",
+                trControl = ctrl,
+                metric="Accuracy",
+)
+
+#mtry_grid <- expand.grid(mtry = seq(1, ceiling(ncol(train)-1), 1)) #Randomly Selected Predictors)
+mtry_grid<-expand.grid(mtry =c(8,10,12))
+
+set.seed(1011)
+bosque <- train(fmla, 
+                data = train, 
+                method = "rf",
+                trControl = ctrl,
+                metric="Accuracy",
+                tuneGrid = mtry_grid,
+                ntree=1000)
+bosque
+bosque$finalModel
+bosque_pred <- predict(bosque, newdata = test, type="raw")
+confusionMatrix(data = bosque_pred, reference = test$Pobre)
+
+############# boosted trees ####################
+p_load(fastAdaboost)
+M_grid<- expand.grid(nIter=c(10,50,100),method="adaboost")
+M_grid
+
+adaboost_res <- train(fmla,
+                      data = train, 
+                      method = "adaboost", 
+                      trControl = ctrl,
+                      metric = "Accuracy",
+                      tuneGrid = M_grid
+)
+adaboost_res
+
+
+pred_ada<-predict(adaboost_res,test)
+confusionMatrix(pred_ada,test$Pobre)
+
+
+################ Traditional GBM ###################
+
+p_load(gbm)
+
+grid_gbm<-expand.grid(n.trees=c(200,300,500),interaction.depth=c(1,2,3),shrinkage=c(0.01,0.001),n.minobsinnode
+                      =c(10,30))
+#n.trees (# Boosting Iterations)
+#interaction.depth (Max Tree Depth)
+#shrinkage (Shrinkage)
+# n.minobsinnode (Min. Terminal Node Size) 
+
+grid_gbm
+gbm_res <- train(fmla,
+                 data = train, 
+                 method = "gbm", 
+                 trControl = ctrl,
+                 tuneGrid=grid_gbm,
+                 metric = "Accuracy"
+)            
+
+
+gbm_res$bestTune
+
+pred_gbm<-predict(gbm_res,test)
+confusionMatrix(pred_gbm,test$Pobre)
 
 
