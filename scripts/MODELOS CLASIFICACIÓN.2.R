@@ -473,6 +473,13 @@ metricas1 %>%
   kbl(digits = 2)  %>%
   kable_styling(full_width = T)
 
+## Predicción 2: Predicciones con test_hogares
+pred_test_Modelobasic<- predict(modelo1, newdata = test_hogares)
+
+# Exportar para prueba en Kaggle
+Kaggle_ModeloBasic <- data.frame(id=test_hogares$id, pobre=pred_test_Modelobasic)
+write.csv(Kaggle_ModeloBasic,"./stores/Kaggle_ModeloBasic.csv", row.names = FALSE)
+
 # REMUESTREO --------------------
 # 1. UPSAMPLE
 trainbase2 <- upSample(x = select(trainbase, -Pobre), 
@@ -663,7 +670,7 @@ metricas %>%
 # kaggle
 opt_test <- data.frame()
 for (t in thresholds) {
-  y_pred_t <- as.numeric(probs_outsample > t)
+  y_pred_t <- as.numeric(probs_outsample1 > t)
   f1_t <- F1_Score(y_true = test_hogares$Pobre, 
                    y_pred = y_pred_t,
                    positive = 1)
