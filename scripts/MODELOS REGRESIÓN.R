@@ -484,7 +484,7 @@ pob2_Modelolasso <- ifelse(pred_test2_Modelolasso<test_hogares$Lp, 1, 0)
 Kaggle_Modelolasso <- data.frame(id=test_hogares$id, pobre=pob2_Modelolasso)
 write.csv(Kaggle_Modelolasso,"./stores/Kaggle_Modelolasso.csv", row.names = FALSE)
 #write.csv(Kaggle_Modelolasso,"~/GitHub/Taller-2-BDML/stores/Kaggle_Modelolasso.csv", row.names = FALSE)
-# Accuracy: 0.75462
+# Accuracy: 0.?????
 
 
 ### 3.3 Elastic net -----------------------------------------------------------------------------------
@@ -549,6 +549,7 @@ Kaggle_ModeloEN <- data.frame(id=test_hogares$id, pobre=pob2_ModeloEN)
 write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 # Accuracy: 0.75462
 
+
 ### 3.4 Random Forest ---------------------------------------------------------------------------------
 
 # Nueva regresión, eliminando las variables que NO fueron seleccionadas por EN
@@ -603,6 +604,48 @@ write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 
 
 ### 3.5 AdaBoosting -----------------------------------------------------------------------------------
+# opción 1 Ignacio:
+install.packages('BiocManager')
+install.packages("fastAdaboost", dependencies = TRUE)
+
+M_grid<- expand.grid(nIter=c(10,50,100),method="adaboost")
+M_grid
+
+set.seed(1011)
+adaboost_res <- train(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
+                        prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
+                        prop_trabajadorcuentapropia+prop_patronempleador,
+                      data = hog_training, 
+                      method = "adaboost", 
+                      trControl = ctrl,
+                      metric = "Accuracy",
+                      tuneGrid = M_grid
+)
+
+
+adaboost_res
+
+
+pred_ada<-predict(adaboost_res,test)
+confusionMatrix(pred_ada,test$Default)
+
+#opción 2: libro
+
+install.packages("gbm")
+library(gbm)
+set.seed (1)
+boost.hog <- gbm(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
+               prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
+               prop_trabajadorcuentapropia+prop_patronempleador, data = hog_training,
+                      distribution = "gaussian", n.trees = 5000,
+                      interaction.depth = 4)
+
+plot(boost.hog , i = "rm")
+plot(boost.hog , i = "lstat")
+
+yhat.boost <- predict(boost.hog ,
+                      newdata = hog_training, n.trees = 5000)
+mean (( yhat.boost - hog_training.test)^2)
 
 
 
