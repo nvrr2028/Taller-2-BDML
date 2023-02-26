@@ -12,6 +12,7 @@ rm(list = ls(all.names = TRUE))
 
 # Directorio de trabajo (cambiar según computador)
 setwd("C:/Users/nicol/Documents/GitHub/Repositorios/Taller-2-BDML")
+#setwd("C:/Users/lmrod/OneDrive/Documentos/GitHub/Taller-2-BDML")
 
 # ------------------------------------------------------------------------------------ #
 # Cargar librerias.
@@ -37,10 +38,16 @@ sapply(list.of.packages, require, character.only = TRUE)
 #1. Train
 train_personas_original <- read_csv("./data/train_personas.csv")
 train_hogares_original <- read_csv("./data/train_hogares.csv")
+#train_personas_original <- read_csv("~/GitHub/Taller-2-BDML/data/train_personas.csv")
+#train_hogares_original <- read_csv("~/GitHub/Taller-2-BDML/data/train_hogares.csv")
+
 
 #2. Test
 test_personas_original <- read_csv("./data/test_personas.csv")
 test_hogares_original <- read_csv("./data/test_hogares.csv")
+#test_personas_original <- read_csv("~/GitHub/Taller-2-BDML/data/test_personas.csv")
+#test_hogares_original <- read_csv("~/GitHub/Taller-2-BDML/data/test_hogares.csv")
+
 
 ### 2.2 ¿Qué variables faltan? 
 #hogares train vs test: para conocer qué variables faltan en test
@@ -415,7 +422,69 @@ write.csv(Kaggle_ModeloRL,"./stores/Kaggle_ModeloRL.csv", row.names = FALSE)
 # Accuracy: 0.75349
 
 ### 3.2 Lasso -----------------------------------------------------------------------------------------
+grid=10^seq(10,-2,length=100)
 
+Modelolasso<-train(fmla,
+             data=hog_training,
+             method = 'glmnet', 
+             trControl = ctrl,
+             tuneGrid = expand.grid(alpha = 1, #lasso
+                                    lambda = seq(0.001,0.02,by = 0.001)),
+             preProcess = c("center", "scale")
+) 
+
+summary(Modelolasso) # Resumen del modelo
+ggplot(varImp(Modelolasso)) # Gráfico de importancia de las variables
+Modelolasso$bestTune
+
+## Gráfico de los coeficientes 
+#Put coefficients in a data frame, except the intercept
+coefs_lasso<-data.frame(t(as.matrix(coef(ModeloLasso)))) %>% select(-X.Intercept.)
+#add the lambda grid to to data frame
+coefs_lasso<- coefs_lasso %>% mutate(lambda=grid)              
+
+#ggplot friendly format
+coefs_lasso<- coefs_lasso %>% pivot_longer(cols=!lambda,
+                                           names_to="variables",
+                                           values_to="coefficients")
+
+ggplot(data=coefs_lasso, aes(x = lambda, y = coefficients, color = variables)) +
+  geom_line() +
+  scale_x_log10(
+    breaks = scales::trans_breaks("log10", function(x) 10^x),
+    labels = scales::trans_format("log10",
+                                  scales::math_format(10^.x))
+  ) +
+  labs(title = "Coeficientes Lasso", x = "Lambda", y = "Coeficientes") +
+  theme_bw() +
+  theme(legend.position="bottom")
+
+coef_lasso<-coef(Modelolasso$finalModel, Modelolasso$bestTune$lambda)
+coef_lasso
+
+## Predicción 1: Predicciones con hog_testing
+pred_test1_Modelolasso <- predict(Modelolasso, newdata = hog_testing) # Predicción
+eva_Modelolasso <- data.frame(obs=hog_testing$Ingtotug, pred=pred_test1_Modelolasso) # Data frame con observados y predicciones
+metrics_Modelolasso <- metrics(eva_Modelolasso, obs, pred); metrics_Modelolasso # Cálculo del medidas de precisión
+
+# Identificación de pobres y no pobres en hog_testing
+pob1_Modelolasso <- ifelse(pred_test1_Modelolasso<hog_testing$Lp, 1, 0)
+
+# Evaluación de clasificación
+eva_Modelolasso <- data.frame(obs=as.factor(hog_testing$Pobre), pred=as.factor(pob1_Modelolasso)) # Data frame con observados y predicciones
+confmatrix_Modelolasso <- confusionMatrix(data = as.factor(pob1_Modelolasso), reference = as.factor(hog_testing$Pobre)) ; confmatrix_Modelolasso # Matriz de confusión
+
+## Predicción 2: Predicciones con test_hogares
+pred_test2_Modelolasso <- predict(Modelolasso, newdata = test_hogares)
+
+# Identificación de pobres y no pobres en test_hogares
+pob2_Modelolasso <- ifelse(pred_test2_Modelolasso<test_hogares$Lp, 1, 0)
+
+# Exportar para prueba en Kaggle
+Kaggle_Modelolasso <- data.frame(id=test_hogares$id, pobre=pob2_Modelolasso)
+write.csv(Kaggle_Modelolasso,"./stores/Kaggle_Modelolasso.csv", row.names = FALSE)
+#write.csv(Kaggle_Modelolasso,"~/GitHub/Taller-2-BDML/stores/Kaggle_Modelolasso.csv", row.names = FALSE)
+# Accuracy: 0.75462
 
 
 ### 3.3 Elastic net -----------------------------------------------------------------------------------
@@ -442,8 +511,6 @@ coefs_EN<- coefs_EN %>% mutate(lambda=grid)
 coefs_EN<- coefs_EN %>% pivot_longer(cols=!lambda,
                                            names_to="variables",
                                            values_to="coefficients")
-
-
 
 ggplot(data=coefs_EN, aes(x = lambda, y = coefficients, color = variables)) +
   geom_line() +
