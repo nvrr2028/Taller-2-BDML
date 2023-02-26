@@ -530,7 +530,7 @@ plot(ModeloGBM)
 ModeloGBM$finalModel
 
 ### Variable Importance
-varImp(ModeloGBM,scale=TRUE)
+plot(varImp(ModeloGBM,scale=TRUE))
 
 ## Predicción 1: Predicciones con hog_testing
 pred_test1_ModeloGBM <- predict(ModeloGBM, newdata = hog_testing, type="raw")
@@ -554,5 +554,6 @@ pob2_ModeloGBM <- ifelse(pred_test2_ModeloGBM<test_hogares$Lp, 1, 0)
 Kaggle_ModeloGBM <- data.frame(id=test_hogares$id, pobre=pob2_ModeloGBM)
 write.csv(Kaggle_ModeloGBM,"./stores/Kaggle_ModeloGBMreg.csv", row.names = FALSE)
 
+# Accuracy: 0.78810
 
 
