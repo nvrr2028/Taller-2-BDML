@@ -178,6 +178,7 @@ train_hogares$prop_trabajadorsinremunempresa    <- train_hogares$trabajadorsinre
 colnames(train_hogares)
 
 #1.3 Modificaciones adicionales 
+train_hogares$P5010[train_hogares$P5010>=10] <- 10
 train_hogares$Pobre <- as.factor(train_hogares$Pobre) # Pobre como factor
 train_hogares$Depto <- as.factor(train_hogares$Depto) # Departamento como factor
 train_hogares$P5000 <- as.factor(train_hogares$P5000) # Número de cuartos como factor
@@ -407,7 +408,7 @@ fmla <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h
 fmlashort <- formula(Pobre~P5130+P5140+Depto+prop_P6585s1h+prop_P7510s3h+prop_P7505h+prop_Desh+prop_Och+prop_subsidiado+
                        prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_mayoriatiempobuscandotrabajo)
 
-
+##P5010
 modelb <-formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
                    prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
                    prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
@@ -421,10 +422,13 @@ modelb <-formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3
                    prop_contributivo:prop_ningunoeduc+prop_contributivo:prop_preescolar+prop_contributivo:prop_basicaprimaria+
                    prop_contributivo:prop_basicasecundaria+prop_contributivo:prop_media+prop_contributivo:prop_superior+
                    prop_obreroemplempresa:prop_Och+prop_obreroemplempresa:prop_Desh)
+
+modelo_rela<-formula(Pobre~P5130+P5140+Depto+prop_P6585s1h+prop_P7510s3h+prop_P7505h+prop_Desh+prop_Och+prop_subsidiado+
+                       prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_mayoriatiempobuscandotrabajo)
 # Cross-validation
 ctrl <- trainControl(
   method = "cv", 
-  number = 10) # número de folds
+  number = 5) # número de folds
 
 # ELASTIC NET ---------------------------------------
 modelo_b <- train(modelb,
@@ -485,92 +489,11 @@ pred_test_Modelob<- predict(modelo_b, newdata = test_hogares)
 
 # Exportar para prueba en Kaggle
 Kaggle_Modelob <- data.frame(id=test_hogares$id, pobre=pred_test_Modelob)
-write.csv(Kaggle_ModeloBasic,"./stores/Kaggle_Modelob.csv", row.names = FALSE)
-
-
-###################################### modelo rela ##########################################
-mylogit_lasso_b <- train(modelo_b,
-                         data = train , 
-                         method = "glmnet",
-                         trControl = ctrl,
-                         family = "binomial", 
-                         metric = "Accuracy",
-                         tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
-                         preProcess = c("center", "scale")
-)
-mylogit_lasso_b
-
-#TABLITA DE CÓMO NOS FUE -----------
-y_hat_insampleb <- predict(mylogit_lasso_b, train)
-y_hat_outsampleb <- predict(mylogit_lasso_b, test)
-probs_insampleb <- predict(mylogit_lasso_b, train, type = "prob")[, "1", drop = T]
-probs_outsampleb <- predict(mylogit_lasso_b, test, type = "prob")[, "1", drop = T]
-
-acc_insampleb <- Accuracy(y_pred = y_hat_insampleb, y_true = train$Pobre)
-acc_outsampleb <- Accuracy(y_pred = y_hat_outsampleb, y_true = test$Pobre)
-
-pre_insampleb <- Precision(y_pred = y_hat_insampleb, 
-                           y_true = train$Pobre, positive = 1)
-pre_outsampleb <- Precision(y_pred = y_hat_outsampleb, 
-                            y_true = test$Pobre, positive = 1)
-
-rec_insampleb <- Recall(y_pred = y_hat_insampleb, 
-                        y_true = train$Pobre, positive = 1)
-rec_outsampleb <- Recall(y_pred = y_hat_outsampleb, 
-                         y_true = test$Pobre, positive = 1)
-
-f1_insampleb <- F1_Score(y_pred = y_hat_insampleb, 
-                         y_true = train$Pobre, positive = 1)
-f1_outsampleb <- F1_Score(y_pred = y_hat_outsampleb, 
-                          y_true = test$Pobre, positive = 1)
-
-metricas_insampleb <- data.frame(Modelo = "Regresión lasso Modelo b", 
-                                 "Muestreo" = NA, 
-                                 "Evaluación" = "Dentro de muestra",
-                                 "Accuracy" = acc_insampleb,
-                                 "Precision - PPV" = pre_insampleb,
-                                 "Recall - TPR - Sensitivity" = rec_insampleb,
-                                 "F1" = f1_insampleb)
-
-metricas_outsampleb <- data.frame(Modelo = "Regresión lasso Modelo b", 
-                                  "Muestreo" = NA, 
-                                  "Evaluación" = "Fuera de muestra",
-                                  "Accuracy" = acc_outsampleb,
-                                  "Precision - PPV" = pre_outsampleb,
-                                  "Recall - TPR - Sensitivity" = rec_outsampleb,
-                                  "F1" = f1_outsampleb)
-
-metricasb <- bind_rows(metricas_insampleb, metricas_outsampleb)
-metricasb
-
-lambda_grid <- 10^seq(-4, 0.01, length = 100)
-
-### UP sumpling ### ----------------
-
-upSampledTrainrela <- upSample(x = train,
-                               y = train$Pobre,
-                               ## keep the class variable name the same:
-                               yname = "Pobre")
-dim(train)
-
-dim(upSampledTrainrela)
-
-table(upSampledTrainrela$Pobre)
-
-mylogit_lasso_upsample_rela <- train(modelo_b, 
-                                     data = upSampledTrainrela, 
-                                     method = "glmnet",
-                                     trControl = ctrl,
-                                     family = "binomial", 
-                                     metric = "Accuracy",
-                                     tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
-                                     preProcess = c("center", "scale")
-)
-mylogit_lasso_upsample_rela
+write.csv(Kaggle_Modelob,"./stores/Kaggle_Modelob.csv", row.names = FALSE)
 
 ### Down sumpling ### ---------------------
 
-DownSampledTrainrela <- downSample(x = train,
+DownSampledTrainb <- downSample(x = train,
                                    y = train$Pobre,
                                    ## keep the class variable name the same:
                                    yname = "Pobre")
@@ -668,15 +591,15 @@ metricas1 %>%
   kable_styling(full_width = T)
 
 ### Logit Lasso ### -------------------
-#Lasso
+
 lambda_grid <- 10^seq(-4, 0.01, length = 10)
 
-mylogit_lasso <- train(modelo,
-                            data = hog_training_class , 
+mylogit_lasso <- train(modelo_rela,
+                            data = train , 
                             method = "glmnet",
                             trControl = ctrl,
                             family = "binomial", 
-                            metric = "Recall",
+                            metric = "Accuracy",
                             tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
                             preProcess = c("center", "scale")
 )
@@ -704,6 +627,7 @@ mylogit_lasso_upsample <- train(modelo,
                                 preProcess = c("center", "scale")
 )
 mylogit_lasso_upsample
+
 
 ### Down sumpling ### ---------------------
 
@@ -743,7 +667,40 @@ for (t in thresholds) {
 
 mejor_t <-  opt_t$t[which(opt_t$F1 == max(opt_t$F1, na.rm = T))]
 
+
 ##################### Ramdom forest ##########################
+modelb_forest <-formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
+                   prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
+                   prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
+                   prop_mayoriatiempotrabajo+prop_mayoriatiempobuscandotrabajo+prop_mayoriatiempoestudiando+
+                   prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
+                   prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
+                   prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa+prop_Desh:prop_P6920h+
+                   prop_Desh:prop_P7505h+prop_Desh:prop_P7510s3h+prop_Desh:prop_P6585s3h+prop_Desh:prop_P6585s1h+
+                   prop_subsidiado:prop_ningunoeduc+prop_subsidiado:prop_preescolar+prop_subsidiado:prop_basicaprimaria+
+                   prop_subsidiado:prop_basicasecundaria+prop_subsidiado:prop_media+prop_subsidiado:prop_superior+
+                   prop_contributivo:prop_ningunoeduc+prop_contributivo:prop_preescolar+prop_contributivo:prop_basicaprimaria+
+                   prop_contributivo:prop_basicasecundaria+prop_contributivo:prop_media+prop_contributivo:prop_superior+
+                   prop_obreroemplempresa:prop_Och+prop_obreroemplempresa:prop_Desh)
+ctrl_RF <- trainControl(method = "cv",
+                        number = 10, # Es recomendable correr 10
+)
+
+mtry_grid <- expand.grid(mtry = seq(1, ncol(train), 2))
+mtry_grid
+
+ModeloRF <- caret::train(modelb_forest, 
+                         data = train, 
+                         method = 'rf',
+                         trControl = ctrl,
+                         metric="Accuracy",
+                         tuneGrid = mtry_grid,
+                         preProcess = c("center", "scale"),
+                         ntree=50)
+
+
+
+############
 p_load(randomForest)
 
 fiveStats <- function(...) c(twoClassSummary(...), defaultSummary(...))
@@ -777,6 +734,7 @@ bosque
 bosque$finalModel
 bosque_pred <- predict(bosque, newdata = test, type="raw")
 confusionMatrix(data = bosque_pred, reference = test$Pobre)
+
 
 ############# boosted trees ####################
 p_load(fastAdaboost)
@@ -822,5 +780,84 @@ gbm_res$bestTune
 
 pred_gbm<-predict(gbm_res,test)
 confusionMatrix(pred_gbm,test$Pobre)
+
+#a la lucas 
+# Creamos una grilla para tunear el gbm
+tunegrid_gbm <- expand.grid(learn_rate = c(0.1, 0.01, 0.001),
+                            ntrees = 50,
+                            max_depth = 2,
+                            col_sample_rate = 1,
+                            min_rows = 70) 
+
+
+# Truco de instalación
+if ("package:h2o" %in% search()) {detach("package:h2o", unload=TRUE) }
+if ("h2o" %in% rownames(installed.packages())) {remove.packages("h2o")}
+library(pacman)
+p_load("RCurl","jsonlite") 
+install.packages("h2o", type = "source", 
+                 repos = (c("http://h2o-release.s3.amazonaws.com/h2o/latest_stable_R")))
+
+# Inicializamos el modelo
+library(h2o)
+# YO le voy a poner 10 nucleos porque los tengo. Si usted tiene menos o más, pues cambie el parámetro
+h2o.init(nthreads = 1)
+
+# Esta chimbada es bien demorada
+set.seed(123)
+library(caret)
+modelo2GBT <- train(fmla,
+                    data = train, 
+                    method = "gbm_h2o", 
+                    trControl = ctrl,
+                    metric = 'Accuracy', 
+                    tuneGrid = tunegrid_gbm) 
+
+# Visualicemos el mejor modelo
+plot(modelo2GBT)
+
+y_hat_insamplegbt <- predict(modelo2GBT, newdata = trainbase) 
+y_hat_outsamplegbt = predict(modelo2GBT, newdata = testbase)
+
+acc_insamplegbt <- Accuracy(y_pred = y_hat_insamplegbt, y_true = trainbase$Pobre)
+acc_outsamplegbt <- Accuracy(y_pred = y_hat_outsamplegbt, y_true = testbase$Pobre)
+
+pre_insamplegbt <- Precision(y_pred = y_hat_insamplegbt, y_true = trainbase$Pobre, positive = 1)
+pre_outsamplegbt <- Precision(y_pred = y_hat_outsamplegbt, y_true = testbase$Pobre, positive = 1)
+
+rec_insamplegbt <- Recall(y_pred = y_hat_insamplegbt, y_true = trainbase$Pobre, positive = 1)
+rec_outsamplegbt <- Recall(y_pred = y_hat_outsamplegbt, y_true = testbase$Pobre, positive = 1)
+
+f1_insamplegbt <- F1_Score(y_pred = y_hat_insamplegbt, y_true = trainbase$Pobre, positive = 1)
+f1_outsamplegbt <- F1_Score(y_pred = y_hat_outsamplegbt, y_true = testbase$Pobre, positive = 1)
+
+metricas_insamplegbt <- data.frame(Modelo = "Gradient Boosting tree", 
+                                   "Muestreo" = "Cambiar función de costo", 
+                                   "Evaluación" = "Dentro de muestra",
+                                   "Accuracy" = acc_insamplegbt,
+                                   "Precision - PPV" = pre_insamplegbt,
+                                   "Recall - TPR - Sensitivity" = rec_insamplegbt,
+                                   "F1" = f1_insamplegbt)
+
+metricas_outsamplerf <- data.frame(Modelo = "Random Forest", 
+                                   "Muestreo" = "Cambiar función de costo", 
+                                   "Evaluación" = "Fuera de muestra",
+                                   "Accuracy" = acc_outsamplegbt,
+                                   "Precision - PPV" = pre_outsamplegbt,
+                                   "Recall - TPR - Sensitivity" = rec_outsamplegbt,
+                                   "F1" = f1_outsamplegbt)
+
+metricasgbt <- bind_rows(metricas_insamplegbt, metricas_outsamplegbt)
+metricas <- bind_rows(metricas, metricasgbt)
+metricas %>%
+  kbl(digits = 2)  %>%
+  kable_styling(full_width = T)
+
+## Predicción 2: Predicciones con test_hogares
+pred_test_Modelogbt<- predict(modelo_gbt, newdata = test_hogares)
+
+# Exportar para prueba en Kaggle
+Kaggle_Modelogbt <- data.frame(id=test_hogares$id, pobre=pred_test_gbt)
+write.csv(Kaggle_Modelogbt,"./stores/Kaggle_ModeloGBTc.csv", row.names = FALSE)
 
 

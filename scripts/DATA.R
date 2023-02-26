@@ -360,12 +360,12 @@ coln <- c("Número de cuartos", "Número de dormitorios", "Tenencia de vivienda"
           "Oficios del hogar", "Incapacitado", "Empleado empresa privada", "Empleado gobierno", "Empleado doméstico", 
           "Independiente", "Patrón", "Empleado sin pago hogar", "Empleado sin pago empresa")
 base <- train_hogares %>% 
-  select(P5000:Npersug, Depto:Pobres, starts_with("prop_"))%>% 
+  select(P5000:Npersug, Depto:Pobre, starts_with("prop_"))%>% 
   select(-P5130, -P5140)
 colnames(base) <- coln
 
 ### Estadística descriptiva: análisis preliminar
-stargazer(base, header=FALSE, type='latex',title="Variable")
+stargazer(base, header=FALSE, type='text',title="Variable")
 
 ### Mapa de correlaciones 
 corrm <- base
@@ -374,4 +374,77 @@ corrplot(res2$r, type="upper", order="hclust",
          p.mat = res2$p, sig.level = 0.05, insig = "blank", tl.col="black") # Las correlaciones no signitificativas se eliminan
 
 ### Análisis por variables
+
+## Ocupados y nivel de educación
+data1 <- base
+data1$Edu <- 0
+data1$Edu[data1$`Ninguna educación`!=0] <- 1
+data1$Edu[data1$Preescolar!=0] <- 2
+data1$Edu[data1$Primaria!=0] <- 3
+data1$Edu[data1$Secundaria!=0] <4
+data1$Edu[data1$Media!=0] <- 5 
+data1$Edu[data1$Superior!=0]<- 6
+data1$Edu[data1$Edu==0] <- 1
+data1$Empleado<-ifelse(data1$Empleado!=0, 1, 0)
+
+labels1=c('Ninguno', 'Preescolar', 'Primaria', 'Media', 'Superior')
+ggplot(data1) + 
+  geom_bar(mapping = aes(as.factor(Edu), `Ingreso hogar`, group=as.factor(Empleado), fill=as.factor(Empleado)), 
+           position = "dodge", stat = "summary", fun = "median") + 
+  labs(x = "Nivel de educación", y = "Ingreso total (pesos)") +
+  scale_x_discrete(labels = function(x) str_wrap(labels1, width = 6)) +
+  scale_fill_manual(values = c("0"="#E69F00" , "1"="#CC79A7") , label = c("0"="No hay empleados" , "1"="Hay empleados")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.title = element_blank())
+
+## Número de personas y cotización a pensión
+data2 <- base
+data2$`Número de personas gasto`[data2$`Número de personas gasto`<=5]<-1
+data2$`Número de personas gasto`[data2$`Número de personas gasto`>5 & data2$`Número de personas gasto`<=10]<-2
+data2$`Número de personas gasto`[data2$`Número de personas gasto`>10 & data2$`Número de personas gasto`<=15]<-3
+data2$`Número de personas gasto`[data2$`Número de personas gasto`>15 & data2$`Número de personas gasto`<=20]<-4
+data2$`Número de personas gasto`[data2$`Número de personas gasto`>20]<-5
+data2$Pensión<-ifelse(data2$Pensión==0, 0, 1)
+
+labels2=c('1-5 personas', '5-10 personas', '10-15 personas','15-20 personas', '+20 personas')
+ggplot(data2) + 
+  geom_bar(mapping = aes(as.factor(`Número de personas gasto`), `Ingreso hogar`, group=as.factor(Pensión), fill=as.factor(Pensión)), 
+           position = "dodge", stat = "summary", fun = "median") + 
+  labs(x = "Número de personas", y = "Ingreso total (pesos)") +
+  scale_x_discrete(labels = function(x) str_wrap(labels2, width = 6)) +
+  scale_fill_manual(values = c("0"="#ffc425" , "1"="#00aedb") , label = c("0"="No cotiza" , "1"="Si cotiza")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.title = element_blank())
+
+## Ayudas y tipo de tenencia de vivienda
+data3 <- base
+data3$Ayudas <- 0
+data3$Ayudas[data3$`Auxilio alimentación`!=0] <- 1 
+data3$Ayudas[data3$`Auxilio familiar`!=0] <- 1 
+data3$Ayudas[data3$`Recibieron dinero instituciones`!= 0] <- 1 
+data3$Ayudas[data3$`Recibieron dinero hogares`!=0] <- 1
+
+labels3=c('Propia, pagada', 'Propia, pagando', 'Arriendo','Usufructo', 'Ocupante de hecho', 'Otra')
+ggplot(data3) + 
+  geom_bar(mapping = aes(as.factor(`Tenencia de vivienda`), `Ingreso hogar`, group=as.factor(Ayudas), fill=as.factor(Ayudas)), 
+           position = "dodge", stat = "summary", fun = "median") + 
+  labs(x = "Tipo de tenencia de vivienda", y = "Ingreso total (pesos)") +
+  scale_x_discrete(labels = function(x) str_wrap(labels3, width = 6)) +
+  scale_fill_manual(values = c("0"="#F0E442" , "1"="#009E73") , label = c("0"="No recibe ayudas" , "1"="Recibe ayudas")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.title = element_blank())
+
+## Tipo de empleo y número de dormitorios
+data4 <- base
+data4$Tocu <- 0
+data4$Tocu[data4$`Empleado empresa privada`!=0] <- 1
+data4$Tocu[data4$`Empleado gobierno`!=0] <- 1
+
+ggplot(data4) + 
+  geom_bar(mapping = aes(as.factor(`Número de dormitorios`), `Ingreso hogar`, group=as.factor(Tocu), fill=as.factor(Tocu)), 
+           position = "dodge", stat = "summary", fun = "median") + 
+  labs(x = "Número de dormitorios", y = "Ingreso total (pesos)") +
+  scale_fill_manual(values = c("0"="#CC6666" , "1"="#9999CC") , label = c("0"="Otro tipo de empleo" , "1"="Empleado en empresa o Gobierno")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.title = element_blank())
 
