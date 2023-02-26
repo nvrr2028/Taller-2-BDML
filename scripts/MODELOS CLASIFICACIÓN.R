@@ -178,6 +178,7 @@ train_hogares$prop_trabajadorsinremunempresa    <- train_hogares$trabajadorsinre
 colnames(train_hogares)
 
 #1.3 Modificaciones adicionales 
+train_hogares$P5010[train_hogares$P5010>=10] <- 10
 train_hogares$Pobre <- as.factor(train_hogares$Pobre) # Pobre como factor
 train_hogares$Depto <- as.factor(train_hogares$Depto) # Departamento como factor
 train_hogares$P5000 <- as.factor(train_hogares$P5000) # Número de cuartos como factor
