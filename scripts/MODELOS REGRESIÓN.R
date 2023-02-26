@@ -538,6 +538,7 @@ write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 
 
 
+
 ### 3.6 GBM -------------------------------------------------------------------------------------------
 p_load(gbm)
 grid_gbm<-expand.grid(n.trees=c(200,300,500),interaction.depth=c(1,2,3),shrinkage=c(0.01,0.001),n.minobsinnode
