@@ -484,8 +484,6 @@ write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 
 ### 3.4 Random Forest ---------------------------------------------------------------------------------
 
-# Nueva regresión, eliminando las variables que NO fueron seleccionadas por EN
-<<<<<<< Updated upstream
 # fmla_RF <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
 #                      prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
 #                      prop_trabajadorcuentapropia+prop_patronempleador)
@@ -534,41 +532,13 @@ write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 # # Exportar para prueba en Kaggle
 # Kaggle_ModeloEN <- data.frame(id=test_hogares$id, pobre=pob2_ModeloRF)
 # write.csv(Kaggle_ModeloRF,"./stores/Kaggle_ModeloRF.csv", row.names = FALSE)
-=======
-fmla_RF <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
-                  prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
-                  prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
-                  prop_mayoriatiempotrabajo+prop_mayoriatiempobuscandotrabajo+prop_mayoriatiempoestudiando+
-                  prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
-                  prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
-                  prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa)
-ctrl_RF <- trainControl(method = "cv",
-                    number = 10, # Es recomendable correr 10
-                    )
-#### Hiperparámetros
-mtry_grid <- expand.grid(mtry = seq(1, ncol(hog_training), 2))
-mtry_grid
-
-ModeloRF <- caret::train(fmla, 
-                data = hog_training, 
-                method = 'rf',
-                trControl = ctrl_RF,
-                metric="RMSE",
-                tuneGrid = mtry_grid,
-                preProcess = c("center", "scale"),
-                ntree=700)
-
-ModeloRF #mtry es el número de predictores.
-plot(ModeloRF)
-ModeloRF$finalModel
->>>>>>> Stashed changes
 
 
 ### 3.5 AdaBoosting -----------------------------------------------------------------------------------
 
 
 
-<<<<<<< Updated upstream
+
 ### 3.6 GBM -------------------------------------------------------------------------------------------
 p_load(gbm)
 grid_gbm<-expand.grid(n.trees=c(200,300,500),interaction.depth=c(1,2,3),shrinkage=c(0.01,0.001),n.minobsinnode
@@ -610,11 +580,6 @@ pob2_ModeloGBM <- ifelse(pred_test2_ModeloGBM<test_hogares$Lp, 1, 0)
 # Exportar para prueba en Kaggle
 Kaggle_ModeloGBM <- data.frame(id=test_hogares$id, pobre=pob2_ModeloGBM)
 write.csv(Kaggle_ModeloGBM,"./stores/Kaggle_ModeloGBMreg.csv", row.names = FALSE)
-=======
-### 3.5 AdaBoosting -----------------------------------------------------------------------------------
-
-
->>>>>>> Stashed changes
 
 
 
