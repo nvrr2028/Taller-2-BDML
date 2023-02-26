@@ -606,5 +606,20 @@ write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 
 
 
+### 3.6 GBM -------------------------------------------------------------------------------------------
+
+grid_gbm<-expand.grid(n.trees=c(200,300,500),interaction.depth=c(1,2,3),shrinkage=c(0.01,0.001),n.minobsinnode
+                      =c(10,30))
+
+gbm_res <- train(fmla,
+                 data = hog_training, 
+                 method = "gbm", 
+                 trControl = ctrl,
+                 tuneGrid=grid_gbm,
+                 metric = "RMSE"
+)            
+
+gbm_res
+
 
 
