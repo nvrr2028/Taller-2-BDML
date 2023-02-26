@@ -406,7 +406,7 @@ fmla <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h
                     prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
                     prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa)
 
-fmlashort <- formula(Pobre~P5130+P5140+Depto+prop_P6585s1h+prop_P7510s3h+prop_P7505h+prop_Desh+prop_Och+prop_subsidiado+
+fmlashort <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P7510s3h+prop_P7505h+prop_Desh+prop_Och+prop_subsidiado+
                        prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_mayoriatiempobuscandotrabajo)
 
 # Cross-validation
@@ -799,6 +799,7 @@ modelo2_rf <- train(fmlashort ,
                  metric = 'Accuracy', 
                  tuneGrid = tunegrid_rf)
 plot(modelo2_rf)
+modelo2_rf$bestTune
 
 y_hat_insamplerf = predict(modelo2_rf, newdata = trainbase)
 y_hat_outsamplerf = predict(modelo2_rf, newdata = testbase)
@@ -869,8 +870,15 @@ gbm_res <- train(fmla,
 )  
 
 gbm_res$bestTune
-pred_gbm<-predict(gbm_res,test)
-confusionMatrix(pred_gbm,test$Default)
+pred_gbmt<-predict(gbm_res,testbase)
+confusionMatrix(pred_gbm,testbase$Pobre)
+
+## Predicción 2: Predicciones con test_hogares
+pred_gbm<- predict(gbm_res, newdata = test_hogares)
+
+# Exportar para prueba en Kaggle
+Kaggle_ModeloGBM <- data.frame(id=test_hogares$id, pobre=pred_gbm)
+write.csv(Kaggle_ModeloGBM,"C:/Users/USER/OneDrive/Documentos/GitHub/Taller-2-BDML/stores/Kaggle_ModeloGBM.csv", row.names = FALSE)
 
 #a la lucas 
 # Creamos una grilla para tunear el gbm
