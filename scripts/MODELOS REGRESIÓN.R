@@ -484,7 +484,7 @@ pob2_Modelolasso <- ifelse(pred_test2_Modelolasso<test_hogares$Lp, 1, 0)
 Kaggle_Modelolasso <- data.frame(id=test_hogares$id, pobre=pob2_Modelolasso)
 write.csv(Kaggle_Modelolasso,"./stores/Kaggle_Modelolasso.csv", row.names = FALSE)
 #write.csv(Kaggle_Modelolasso,"~/GitHub/Taller-2-BDML/stores/Kaggle_Modelolasso.csv", row.names = FALSE)
-# Accuracy: 0.?????
+# Accuracy: 0.75349
 
 
 ### 3.3 Elastic net -----------------------------------------------------------------------------------
