@@ -799,6 +799,7 @@ modelo2_rf <- train(fmlashort ,
                  metric = 'Accuracy', 
                  tuneGrid = tunegrid_rf)
 plot(modelo2_rf)
+modelo2_rf$bestTune
 
 y_hat_insamplerf = predict(modelo2_rf, newdata = trainbase)
 y_hat_outsamplerf = predict(modelo2_rf, newdata = testbase)
