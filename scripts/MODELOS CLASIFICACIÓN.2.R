@@ -882,8 +882,15 @@ gbm_res <- train(fmla,
 )  
 
 gbm_res$bestTune
-pred_gbm<-predict(gbm_res,test)
-confusionMatrix(pred_gbm,test$Default)
+pred_gbmt<-predict(gbm_res,testbase)
+confusionMatrix(pred_gbm,testbase$Pobre)
+
+## Predicción 2: Predicciones con test_hogares
+pred_gbm<- predict(gbm_res, newdata = test_hogares)
+
+# Exportar para prueba en Kaggle
+Kaggle_ModeloGBM <- data.frame(id=test_hogares$id, pobre=pred_gbm)
+write.csv(Kaggle_ModeloGBM,"C:/Users/USER/OneDrive/Documentos/GitHub/Taller-2-BDML/stores/Kaggle_ModeloGBM.csv", row.names = FALSE)
 
 #a la lucas 
 # Creamos una grilla para tunear el gbm
