@@ -407,7 +407,7 @@ fmla <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h
 fmlashort <- formula(Pobre~P5130+P5140+Depto+prop_P6585s1h+prop_P7510s3h+prop_P7505h+prop_Desh+prop_Och+prop_subsidiado+
                        prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_mayoriatiempobuscandotrabajo)
 
-
+##P5010
 modelb <-formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
                    prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
                    prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
@@ -489,16 +489,15 @@ write.csv(Kaggle_ModeloBasic,"./stores/Kaggle_Modelob.csv", row.names = FALSE)
 
 
 ###################################### modelo rela ##########################################
-mylogit_lasso_b <- train(modelo_b,
-                         data = train , 
-                         method = "glmnet",
-                         trControl = ctrl,
-                         family = "binomial", 
-                         metric = "Accuracy",
-                         tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
-                         preProcess = c("center", "scale")
-)
-mylogit_lasso_b
+lasso_b<-caret::train(modelo_b,
+                       data=train,
+                       method = 'glmnet', 
+                       trControl = ctrl,
+                       tuneGrid = expand.grid(alpha = seq(0,1,by = 0.01), #Lasso
+                                              lambda = seq(0.001,0.1,by = 0.001)),
+                       preProcess = c("center", "scale")
+) 
+lasso_b
 
 #TABLITA DE CÓMO NOS FUE -----------
 y_hat_insampleb <- predict(mylogit_lasso_b, train)
@@ -540,6 +539,10 @@ metricas_outsampleb <- data.frame(Modelo = "Regresión lasso Modelo b",
                                   "Recall - TPR - Sensitivity" = rec_outsampleb,
                                   "F1" = f1_outsampleb)
 
+metricasb <- bind_rows(metricas_insampleb, metricas_outsampleb)
+metricasb %>%
+  kbl(digits = 2)  %>%
+  kable_styling(full_width = T)
 metricasb <- bind_rows(metricas_insampleb, metricas_outsampleb)
 metricasb
 
@@ -743,7 +746,40 @@ for (t in thresholds) {
 
 mejor_t <-  opt_t$t[which(opt_t$F1 == max(opt_t$F1, na.rm = T))]
 
+
 ##################### Ramdom forest ##########################
+modelb_forest <-formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_P7510s3h+
+                   prop_P7505h+prop_P6920h+prop_Desh+prop_subsidiado+prop_contributivo+prop_especial+
+                   prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_media+prop_superior+
+                   prop_mayoriatiempotrabajo+prop_mayoriatiempobuscandotrabajo+prop_mayoriatiempoestudiando+
+                   prop_mayoriatiempooficiohogar+prop_mayoriatiempoincapacitado+prop_obreroemplempresa+
+                   prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
+                   prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa+prop_Desh:prop_P6920h+
+                   prop_Desh:prop_P7505h+prop_Desh:prop_P7510s3h+prop_Desh:prop_P6585s3h+prop_Desh:prop_P6585s1h+
+                   prop_subsidiado:prop_ningunoeduc+prop_subsidiado:prop_preescolar+prop_subsidiado:prop_basicaprimaria+
+                   prop_subsidiado:prop_basicasecundaria+prop_subsidiado:prop_media+prop_subsidiado:prop_superior+
+                   prop_contributivo:prop_ningunoeduc+prop_contributivo:prop_preescolar+prop_contributivo:prop_basicaprimaria+
+                   prop_contributivo:prop_basicasecundaria+prop_contributivo:prop_media+prop_contributivo:prop_superior+
+                   prop_obreroemplempresa:prop_Och+prop_obreroemplempresa:prop_Desh)
+ctrl_RF <- trainControl(method = "cv",
+                        number = 10, # Es recomendable correr 10
+)
+
+mtry_grid <- expand.grid(mtry = seq(1, ncol(train), 2))
+mtry_grid
+
+ModeloRF <- caret::train(modelb_forest, 
+                         data = train, 
+                         method = 'rf',
+                         trControl = ctrl_RF,
+                         metric="Accuracy",
+                         tuneGrid = mtry_grid,
+                         preProcess = c("center", "scale"),
+                         ntree=500)
+
+
+
+############
 p_load(randomForest)
 
 fiveStats <- function(...) c(twoClassSummary(...), defaultSummary(...))
@@ -777,6 +813,7 @@ bosque
 bosque$finalModel
 bosque_pred <- predict(bosque, newdata = test, type="raw")
 confusionMatrix(data = bosque_pred, reference = test$Pobre)
+
 
 ############# boosted trees ####################
 p_load(fastAdaboost)
