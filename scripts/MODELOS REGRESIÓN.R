@@ -484,7 +484,6 @@ write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 
 ### 3.4 Random Forest ---------------------------------------------------------------------------------
 
-# Nueva regresión, eliminando las variables que NO fueron seleccionadas por EN
 # fmla_RF <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
 #                      prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
 #                      prop_trabajadorcuentapropia+prop_patronempleador)
