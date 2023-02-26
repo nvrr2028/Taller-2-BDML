@@ -432,33 +432,6 @@ summary(ModeloEN) # Resumen del modelo
 ggplot(varImp(ModeloEN)) # Gráfico de importancia de las variables
 ModeloEN$bestTune
 
-## Gráfico de los coeficientes 
-#Put coefficients in a data frame, except the intercept
-coefs_EN<-data.frame(t(as.matrix(coef(ModeloEN)))) %>% select(-X.Intercept.)
-#add the lambda grid to to data frame
-coefs_EN<- coefs_EN %>% mutate(lambda=grid)              
-
-#ggplot friendly format
-coefs_EN<- coefs_EN %>% pivot_longer(cols=!lambda,
-                                           names_to="variables",
-                                           values_to="coefficients")
-
-
-
-ggplot(data=coefs_EN, aes(x = lambda, y = coefficients, color = variables)) +
-  geom_line() +
-  scale_x_log10(
-    breaks = scales::trans_breaks("log10", function(x) 10^x),
-    labels = scales::trans_format("log10",
-                                  scales::math_format(10^.x))
-  ) +
-  labs(title = "Coeficientes Elastic Net", x = "Lambda", y = "Coeficientes") +
-  theme_bw() +
-  theme(legend.position="bottom")
-
-coef_EN<-coef(EN$finalModel, EN$bestTune$lambda)
-coef_EN
-
 ## Predicción 1: Predicciones con hog_testing
 pred_test1_ModeloEN <- predict(ModeloEN, newdata = hog_testing) # Predicción
 eva_ModeloEN <- data.frame(obs=hog_testing$Ingtotug, pred=pred_test1_ModeloEN) # Data frame con observados y predicciones
