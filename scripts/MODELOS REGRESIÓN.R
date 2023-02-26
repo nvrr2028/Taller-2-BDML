@@ -416,7 +416,6 @@ write.csv(Kaggle_ModeloRL,"./stores/Kaggle_ModeloRL.csv", row.names = FALSE)
 
 ### 3.2 Lasso -----------------------------------------------------------------------------------------
 
-<<<<<<< HEAD
 Modelolasso<-train(fmla,
              data=hog_training,
              method = 'glmnet', 
@@ -478,9 +477,6 @@ Kaggle_Modelolasso <- data.frame(id=test_hogares$id, pobre=pob2_Modelolasso)
 write.csv(Kaggle_Modelolasso,"./stores/Kaggle_Modelolasso.csv", row.names = FALSE)
 #write.csv(Kaggle_Modelolasso,"~/GitHub/Taller-2-BDML/stores/Kaggle_Modelolasso.csv", row.names = FALSE)
 # Accuracy: 0.75349
-=======
->>>>>>> bb0218e731855fa2f1aca079d515eb2038e291fd
-
 
 ### 3.3 Elastic net -----------------------------------------------------------------------------------
 ModeloEN<-caret::train(fmla,
@@ -572,8 +568,6 @@ write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 
 
 ### 3.5 AdaBoosting -----------------------------------------------------------------------------------
-
-
 
 
 ### 3.6 GBM -------------------------------------------------------------------------------------------
