@@ -406,22 +406,16 @@ fmla <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h
                     prop_obreroemplgobierno+prop_empldomestico+prop_trabajadorcuentapropia+prop_patronempleador+
                     prop_trabajadorsinremunfamilia+prop_trabajadorsinremunempresa)
 
-fmlashort <- formula(Pobre~P5130+P5140+Depto+prop_P6585s1h+prop_P7510s3h+prop_P7505h+prop_Desh+prop_Och+prop_subsidiado+
+fmlashort <- formula(Pobre~P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P7510s3h+prop_P7505h+prop_Desh+prop_Och+prop_subsidiado+
                        prop_ningunoeduc+prop_preescolar+prop_basicaprimaria+prop_basicasecundaria+prop_mayoriatiempobuscandotrabajo)
 
 # Cross-validation
 ctrl <- trainControl(
   method = "cv", 
-  number = 10) # número de folds
+  number = 6) # número de folds
 
 # ELASTIC NET ---------------------------------------
 modelo1 <- train(fmla,
-                 data= trainbase,
-                 trcontrol= ctrl,
-                 preProcess = NULL,
-                 method = "glmnet")
-
-#??? modelo1short <- train(fmlashort,
                  data= trainbase,
                  trcontrol= ctrl,
                  preProcess = NULL,
@@ -754,14 +748,6 @@ write.csv(Kaggle_Modelopesos,"./stores/Kaggle_ModeloPesos.csv", row.names = FALS
 library(pacman)
 p_load(ipred, Metrics, rpart.plot, tidyverse,rpart,caret)
 
-#fiveStats <- function(...) c(twoClassSummary(...), defaultSummary(...))
-#ctrl<- trainControl(method = "cv",                                              #Mantener el anterior 
-                    number = 10,
-                    summaryFunction = fiveStats,
-                    classProbs = TRUE,
-                    verbose=FALSE,
-                    savePredictions = T)
-
 sqrt(ncol(trainbase)-1)
 mtry_grid <- expand.grid(mtry = seq(1, ceiling(ncol(trainbase)-1), 1))
 
@@ -773,12 +759,13 @@ forest <- train(fmla,
                 trControl = ctrl,
                 metric = "Accuracy",
                 tuneGrid = mtry_grid,
-                ntree=1000
+                ntree=500
 )
 
 plot(forest)                #Número de predictores para una mejor accuracy                                                         #
 forest$finalModel           #cómo nos fue?
 varImp(bosque,scale=TRUE)   #quitamos alguna variable?
+
 # BOOSTING train------------
 p_load(fastAdaboost)
 
@@ -805,7 +792,7 @@ tunegrid_rf <- expand.grid(mtry = c(3, 5, 10),
                                              70, 100),
                            splitrule = "variance")
 
-modelo2_rf <- train(fmla ,
+modelo2_rf <- train(fmlashort ,
                  data = trainbase, 
                  method = "ranger", 
                  trControl = ctrl,
