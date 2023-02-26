@@ -12,7 +12,6 @@ rm(list = ls(all.names = TRUE))
 
 # Directorio de trabajo (cambiar según computador)
 setwd("C:/Users/nicol/Documents/GitHub/Repositorios/Taller-2-BDML")
-#setwd("C:/Users/lmrod/OneDrive/Documentos/GitHub/Taller-2-BDML")
 
 # ------------------------------------------------------------------------------------ #
 # Cargar librerias.
@@ -20,7 +19,7 @@ setwd("C:/Users/nicol/Documents/GitHub/Repositorios/Taller-2-BDML")
 
 list.of.packages = c("pacman", "readr","tidyverse", "dplyr", "arsenal", "fastDummies", 
                      "caret", "glmnet", "MLmetrics", "skimr", "plyr", "stargazer", "jtools", 
-                     "Metrics", "writexl", "yardstick", "randomForest")
+                     "Metrics", "writexl", "yardstick", "randomForest", "gbm")
 
 new.packages = list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -38,16 +37,10 @@ sapply(list.of.packages, require, character.only = TRUE)
 #1. Train
 train_personas_original <- read_csv("./data/train_personas.csv")
 train_hogares_original <- read_csv("./data/train_hogares.csv")
-#train_personas_original <- read_csv("~/GitHub/Taller-2-BDML/data/train_personas.csv")
-#train_hogares_original <- read_csv("~/GitHub/Taller-2-BDML/data/train_hogares.csv")
-
 
 #2. Test
 test_personas_original <- read_csv("./data/test_personas.csv")
 test_hogares_original <- read_csv("./data/test_hogares.csv")
-#test_personas_original <- read_csv("~/GitHub/Taller-2-BDML/data/test_personas.csv")
-#test_hogares_original <- read_csv("~/GitHub/Taller-2-BDML/data/test_hogares.csv")
-
 
 ### 2.2 ¿Qué variables faltan? 
 #hogares train vs test: para conocer qué variables faltan en test
@@ -422,69 +415,7 @@ write.csv(Kaggle_ModeloRL,"./stores/Kaggle_ModeloRL.csv", row.names = FALSE)
 # Accuracy: 0.75349
 
 ### 3.2 Lasso -----------------------------------------------------------------------------------------
-grid=10^seq(10,-2,length=100)
 
-Modelolasso<-train(fmla,
-             data=hog_training,
-             method = 'glmnet', 
-             trControl = ctrl,
-             tuneGrid = expand.grid(alpha = 1, #lasso
-                                    lambda = seq(0.001,0.02,by = 0.001)),
-             preProcess = c("center", "scale")
-) 
-
-summary(Modelolasso) # Resumen del modelo
-ggplot(varImp(Modelolasso)) # Gráfico de importancia de las variables
-Modelolasso$bestTune
-
-## Gráfico de los coeficientes 
-#Put coefficients in a data frame, except the intercept
-coefs_lasso<-data.frame(t(as.matrix(coef(ModeloLasso)))) %>% select(-X.Intercept.)
-#add the lambda grid to to data frame
-coefs_lasso<- coefs_lasso %>% mutate(lambda=grid)              
-
-#ggplot friendly format
-coefs_lasso<- coefs_lasso %>% pivot_longer(cols=!lambda,
-                                           names_to="variables",
-                                           values_to="coefficients")
-
-ggplot(data=coefs_lasso, aes(x = lambda, y = coefficients, color = variables)) +
-  geom_line() +
-  scale_x_log10(
-    breaks = scales::trans_breaks("log10", function(x) 10^x),
-    labels = scales::trans_format("log10",
-                                  scales::math_format(10^.x))
-  ) +
-  labs(title = "Coeficientes Lasso", x = "Lambda", y = "Coeficientes") +
-  theme_bw() +
-  theme(legend.position="bottom")
-
-coef_lasso<-coef(Modelolasso$finalModel, Modelolasso$bestTune$lambda)
-coef_lasso
-
-## Predicción 1: Predicciones con hog_testing
-pred_test1_Modelolasso <- predict(Modelolasso, newdata = hog_testing) # Predicción
-eva_Modelolasso <- data.frame(obs=hog_testing$Ingtotug, pred=pred_test1_Modelolasso) # Data frame con observados y predicciones
-metrics_Modelolasso <- metrics(eva_Modelolasso, obs, pred); metrics_Modelolasso # Cálculo del medidas de precisión
-
-# Identificación de pobres y no pobres en hog_testing
-pob1_Modelolasso <- ifelse(pred_test1_Modelolasso<hog_testing$Lp, 1, 0)
-
-# Evaluación de clasificación
-eva_Modelolasso <- data.frame(obs=as.factor(hog_testing$Pobre), pred=as.factor(pob1_Modelolasso)) # Data frame con observados y predicciones
-confmatrix_Modelolasso <- confusionMatrix(data = as.factor(pob1_Modelolasso), reference = as.factor(hog_testing$Pobre)) ; confmatrix_Modelolasso # Matriz de confusión
-
-## Predicción 2: Predicciones con test_hogares
-pred_test2_Modelolasso <- predict(Modelolasso, newdata = test_hogares)
-
-# Identificación de pobres y no pobres en test_hogares
-pob2_Modelolasso <- ifelse(pred_test2_Modelolasso<test_hogares$Lp, 1, 0)
-
-# Exportar para prueba en Kaggle
-Kaggle_Modelolasso <- data.frame(id=test_hogares$id, pobre=pob2_Modelolasso)
-write.csv(Kaggle_Modelolasso,"./stores/Kaggle_Modelolasso.csv", row.names = FALSE)
-#write.csv(Kaggle_Modelolasso,"~/GitHub/Taller-2-BDML/stores/Kaggle_Modelolasso.csv", row.names = FALSE)
-# Accuracy: 0.?????
 
 
 ### 3.3 Elastic net -----------------------------------------------------------------------------------
@@ -511,6 +442,8 @@ coefs_EN<- coefs_EN %>% mutate(lambda=grid)
 coefs_EN<- coefs_EN %>% pivot_longer(cols=!lambda,
                                            names_to="variables",
                                            values_to="coefficients")
+
+
 
 ggplot(data=coefs_EN, aes(x = lambda, y = coefficients, color = variables)) +
   geom_line() +
@@ -549,146 +482,69 @@ Kaggle_ModeloEN <- data.frame(id=test_hogares$id, pobre=pob2_ModeloEN)
 write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
 # Accuracy: 0.75462
 
-
 ### 3.4 Random Forest ---------------------------------------------------------------------------------
 
 # Nueva regresión, eliminando las variables que NO fueron seleccionadas por EN
-fmla_RF <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
-                     prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
-                     prop_trabajadorcuentapropia+prop_patronempleador)
-ctrl_RF <- trainControl(method = "cv",
-                    number = 10, # Es recomendable correr 10
-                    )
-
-#### Hiperparámetros
-mtry_grid <- expand.grid(mtry = seq(1, 18, 2))
-mtry_grid
-
-ModeloRF <- caret::train(fmla_RF, 
-                data = hog_training, 
-                method = 'rf',
-                trControl = ctrl_RF,
-                metric="RMSE",
-                tuneGrid = mtry_grid,
-                preProcess = c("center", "scale"),
-                ntree=500)
-
-ModeloRF #mtry es el número de predictores.
-plot(ModeloRF)
-ModeloRF$finalModel
-
-### Variable Importance
-varImp(ModeloRF,scale=TRUE)
-
-## Predicción 1: Predicciones con hog_testing
-pred_test1_ModeloRF <- predict(ModeloRF, newdata = hog_testing, type="raw")
-eva_ModeloRF <- data.frame(obs=hog_testing$Ingtotug, pred=pred_test1_ModeloRF) # Data frame con observados y predicciones
-metrics_ModeloRF <- metrics(eva_ModeloRF, obs, pred); metrics_ModeloRF # Cálculo del medidas de precisión
-
-# Identificación de pobres y no pobres en hog_testing
-pob1_ModeloRF <- ifelse(pred_test1_ModeloRF<hog_testing$Lp, 1, 0)
-
-# Evaluación de clasificación
-eva_ModeloRF <- data.frame(obs=as.factor(hog_testing$Pobre), pred=as.factor(pob1_ModeloRF)) # Data frame con observados y predicciones
-confmatrix_ModeloRF <- confusionMatrix(data = as.factor(pob1_ModeloRF), reference = as.factor(hog_testing$Pobre)) ; confmatrix_ModeloRF # Matriz de confusión
-
-## Predicción 2: Predicciones con test_hogares
-pred_test2_ModeloRF <- predict(ModeloRF, newdata = test_hogares)
-
-# Identificación de pobres y no pobres en test_hogares
-pob2_ModeloRF <- ifelse(pred_test2_ModeloEN<test_hogares$Lp, 1, 0)
-
-# Exportar para prueba en Kaggle
-Kaggle_ModeloEN <- data.frame(id=test_hogares$id, pobre=pob2_ModeloRF)
-write.csv(Kaggle_ModeloEN,"./stores/Kaggle_ModeloEN.csv", row.names = FALSE)
+# fmla_RF <- formula(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
+#                      prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
+#                      prop_trabajadorcuentapropia+prop_patronempleador)
+# ctrl_RF <- trainControl(method = "cv",
+#                     number = 10, # Es recomendable correr 10
+#                     )
+# 
+# #### Hiperparámetros
+# mtry_grid <- expand.grid(mtry = seq(1, 18, 2))
+# mtry_grid
+# 
+# ModeloRF <- caret::train(fmla_RF, 
+#                 data = hog_training, 
+#                 method = 'rf',
+#                 trControl = ctrl_RF,
+#                 metric="RMSE",
+#                 tuneGrid = mtry_grid,
+#                 preProcess = c("center", "scale"),
+#                 ntree=500)
+# 
+# ModeloRF #mtry es el número de predictores.
+# plot(ModeloRF)
+# ModeloRF$finalModel
+# 
+# ### Variable Importance
+# varImp(ModeloRF,scale=TRUE)
+# 
+# ## Predicción 1: Predicciones con hog_testing
+# pred_test1_ModeloRF <- predict(ModeloRF, newdata = hog_testing, type="raw")
+# eva_ModeloRF <- data.frame(obs=hog_testing$Ingtotug, pred=pred_test1_ModeloRF) # Data frame con observados y predicciones
+# metrics_ModeloRF <- metrics(eva_ModeloRF, obs, pred); metrics_ModeloRF # Cálculo del medidas de precisión
+# 
+# # Identificación de pobres y no pobres en hog_testing
+# pob1_ModeloRF <- ifelse(pred_test1_ModeloRF<hog_testing$Lp, 1, 0)
+# 
+# # Evaluación de clasificación
+# eva_ModeloRF <- data.frame(obs=as.factor(hog_testing$Pobre), pred=as.factor(pob1_ModeloRF)) # Data frame con observados y predicciones
+# confmatrix_ModeloRF <- confusionMatrix(data = as.factor(pob1_ModeloRF), reference = as.factor(hog_testing$Pobre)) ; confmatrix_ModeloRF # Matriz de confusión
+# 
+# ## Predicción 2: Predicciones con test_hogares
+# pred_test2_ModeloRF <- predict(ModeloRF, newdata = test_hogares)
+# 
+# # Identificación de pobres y no pobres en test_hogares
+# pob2_ModeloRF <- ifelse(pred_test2_ModeloRF<test_hogares$Lp, 1, 0)
+# 
+# # Exportar para prueba en Kaggle
+# Kaggle_ModeloEN <- data.frame(id=test_hogares$id, pobre=pob2_ModeloRF)
+# write.csv(Kaggle_ModeloRF,"./stores/Kaggle_ModeloRF.csv", row.names = FALSE)
 
 
 ### 3.5 AdaBoosting -----------------------------------------------------------------------------------
-# opción 1 Ignacio:
-install.packages('BiocManager')
-install.packages("fastAdaboost", dependencies = TRUE)
-
-M_grid<- expand.grid(nIter=c(10,50,100),method="adaboost")
-M_grid
-
-set.seed(1011)
-adaboost_res <- train(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
-                        prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
-                        prop_trabajadorcuentapropia+prop_patronempleador,
-                      data = hog_training, 
-                      method = "adaboost", 
-                      trControl = ctrl,
-                      metric = "Accuracy",
-                      tuneGrid = M_grid
-)
 
 
-adaboost_res
-
-
-pred_ada<-predict(adaboost_res,test)
-confusionMatrix(pred_ada,test$Default)
-
-#opción 2: libro
-
-install.packages("gbm")
-library(gbm)
-set.seed (1)
-boost.hog <- gbm(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
-               prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
-               prop_trabajadorcuentapropia+prop_patronempleador, data = hog_training,
-                      distribution = "gaussian", n.trees = 5000,
-                      interaction.depth = 4)
-
-plot(boost.hog , i = "rm")
-plot(boost.hog , i = "lstat")
-
-yhat.boost <- predict(boost.hog ,
-                      newdata = hog_training, n.trees = 5000)
-mean (( yhat.boost - hog_training.test)^2)
-
-
-# 3 lucas
-# Creamos una grilla para tunear el gbm
-tunegrid_gbm <- expand.grid(learn_rate = c(0.1, 0.01, 0.001),
-                            ntrees = 50,
-                            max_depth = 2,
-                            col_sample_rate = 1,
-                            min_rows = 70) 
-
-install.packages("h2o")
-
-# Truco de instalación
-if ("package:h2o" %in% search()) {detach("package:h2o", unload=TRUE) }
-if ("h2o" %in% rownames(installed.packages())) {remove.packages("h2o")}
-library(pacman)
-p_load("RCurl","jsonlite") 
-install.packages("h2o", type = "source", 
-                  repos = (c("http://h2o-release.s3.amazonaws.com/h2o/latest_stable_R")))
-
-# Inicializamos el modelo
-library(h2o)
-# YO le voy a poner 10 nucleos porque los tengo. Si usted tiene menos o más, pues cambie el parámetro
-h2o.init(nthreads = 10)
-
-# Esta chimbada es bien demorada
-set.seed(1)
-library(caret)
-modelo3 <- train(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
-                   prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
-                   prop_trabajadorcuentapropia+prop_patronempleador,
-                 data = hog_training, 
-                 method = "gbm_h2o", 
-                 trControl = cv3,
-                 metric = 'RMSE', 
-                 tuneGrid = tunegrid_gbm) 
 
 ### 3.6 GBM -------------------------------------------------------------------------------------------
-
+p_load(gbm)
 grid_gbm<-expand.grid(n.trees=c(200,300,500),interaction.depth=c(1,2,3),shrinkage=c(0.01,0.001),n.minobsinnode
                       =c(10,30))
 
-gbm_res <- train(fmla,
+ModeloGBM <- train(fmla,
                  data = hog_training, 
                  method = "gbm", 
                  trControl = ctrl,
@@ -696,7 +552,34 @@ gbm_res <- train(fmla,
                  metric = "RMSE"
 )            
 
-gbm_res
+ModeloGBM #mtry es el número de predictores.
+plot(ModeloGBM)
+ModeloGBM$finalModel
+
+### Variable Importance
+varImp(ModeloGBM,scale=TRUE)
+
+## Predicción 1: Predicciones con hog_testing
+pred_test1_ModeloGBM <- predict(ModeloGBM, newdata = hog_testing, type="raw")
+eva_ModeloGBM <- data.frame(obs=hog_testing$Ingtotug, pred=pred_test1_ModeloGBM) # Data frame con observados y predicciones
+metrics_ModeloGBM <- metrics(eva_ModeloGBM, obs, pred); metrics_ModeloGBM # Cálculo del medidas de precisión
+
+# Identificación de pobres y no pobres en hog_testing
+pob1_ModeloGBM <- ifelse(pred_test1_ModeloGBM<hog_testing$Lp, 1, 0)
+
+# Evaluación de clasificación
+eva_ModeloGBM <- data.frame(obs=as.factor(hog_testing$Pobre), pred=as.factor(pob1_ModeloGBM)) # Data frame con observados y predicciones
+confmatrix_ModeloGBM <- confusionMatrix(data = as.factor(pob1_ModeloGBM), reference = as.factor(hog_testing$Pobre)) ; confmatrix_ModeloGBM # Matriz de confusión
+
+## Predicción 2: Predicciones con test_hogares
+pred_test2_ModeloGBM <- predict(ModeloGBM, newdata = test_hogares)
+
+# Identificación de pobres y no pobres en test_hogares
+pob2_ModeloGBM <- ifelse(pred_test2_ModeloGBM<test_hogares$Lp, 1, 0)
+
+# Exportar para prueba en Kaggle
+Kaggle_ModeloGBM <- data.frame(id=test_hogares$id, pobre=pob2_ModeloGBM)
+write.csv(Kaggle_ModeloGBM,"./stores/Kaggle_ModeloGBMreg.csv", row.names = FALSE)
 
 
 
