@@ -648,6 +648,40 @@ yhat.boost <- predict(boost.hog ,
 mean (( yhat.boost - hog_training.test)^2)
 
 
+# 3 lucas
+# Creamos una grilla para tunear el gbm
+tunegrid_gbm <- expand.grid(learn_rate = c(0.1, 0.01, 0.001),
+                            ntrees = 50,
+                            max_depth = 2,
+                            col_sample_rate = 1,
+                            min_rows = 70) 
+
+install.packages("h2o")
+
+# Truco de instalación
+if ("package:h2o" %in% search()) {detach("package:h2o", unload=TRUE) }
+if ("h2o" %in% rownames(installed.packages())) {remove.packages("h2o")}
+library(pacman)
+p_load("RCurl","jsonlite") 
+install.packages("h2o", type = "source", 
+                  repos = (c("http://h2o-release.s3.amazonaws.com/h2o/latest_stable_R")))
+
+# Inicializamos el modelo
+library(h2o)
+# YO le voy a poner 10 nucleos porque los tengo. Si usted tiene menos o más, pues cambie el parámetro
+h2o.init(nthreads = 10)
+
+# Esta chimbada es bien demorada
+set.seed(1)
+library(caret)
+modelo3 <- train(Ingtotug~P5000+P5010+P5090+Nper+Npersug+Depto+prop_P6585s1h+prop_P6585s3h+prop_Desh+prop_contributivo+
+                   prop_media+prop_superior+prop_mayoriatiempotrabajo+prop_obreroemplempresa+prop_obreroemplgobierno+prop_empldomestico+
+                   prop_trabajadorcuentapropia+prop_patronempleador,
+                 data = hog_training, 
+                 method = "gbm_h2o", 
+                 trControl = cv3,
+                 metric = 'RMSE', 
+                 tuneGrid = tunegrid_gbm) 
 
 ### 3.6 GBM -------------------------------------------------------------------------------------------
 
