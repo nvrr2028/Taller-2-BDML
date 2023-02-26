@@ -483,13 +483,28 @@ metricas1 <- bind_rows(metricas_insampleb, metricas_outsampleb)
 metricas1 %>%
   kbl(digits = 2)  %>%
   kable_styling(full_width = T)
-
+modelb$bestTune
 ## Predicción 2: Predicciones con test_hogares
 pred_test_Modelob<- predict(modelo_b, newdata = test_hogares)
 
 # Exportar para prueba en Kaggle
 Kaggle_Modelob <- data.frame(id=test_hogares$id, pobre=pred_test_Modelob)
 write.csv(Kaggle_Modelob,"./stores/Kaggle_Modelob.csv", row.names = FALSE)
+
+-### Logit Lasso ### -------------------
+
+lambda_grid <- 10^seq(-4, 0.01, length = 10)
+
+mylogit_lasso <- train(modelo_rela,
+                       data = train , 
+                       method = "glmnet",
+                       trControl = ctrl,
+                       family = "binomial", 
+                       metric = "Accuracy",
+                       tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
+                       preProcess = c("center", "scale")
+)
+mylogit_lasso
 
 ### UP sumpling ### ----------------
 
@@ -517,23 +532,24 @@ mylogit_lasso_upsample
 
 ### Down sumpling ### ---------------------
 
-DownSampledTrain <- downSample(x = hog_training_class,
-                           y = hog_training_class$Pobre,
+DownSampledTrain <- downSample(x = train,
+                           y = train$Pobre,
                            ## keep the class variable name the same:
                            yname = "Pobre")
-dim(hog_training_class)
+dim(train)
 
-dim(DownSampledTrain)
+dim(train)
 
-table(DownSampledTrain$Pobre)
+table(train$Pobre)
 
-mylogit_lasso_downsample <- train(modelo, 
+mylogit_lasso_downsample <- train(mylogit_lasso, 
                                 data = DownSampledTrain, 
                                 method = "glmnet",
                                 trControl = ctrl,
                                 family = "binomial", 
-                                metric = "Recall",
+                                metric = "Accuracy",
                                 tuneGrid = expand.grid(alpha = 0,lambda=lambda_grid), 
                                 preProcess = c("center", "scale")
 )
 mylogit_lasso_downsample
+
