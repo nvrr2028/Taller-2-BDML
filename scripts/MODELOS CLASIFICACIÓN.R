@@ -483,7 +483,8 @@ metricas1 <- bind_rows(metricas_insampleb, metricas_outsampleb)
 metricas1 %>%
   kbl(digits = 2)  %>%
   kable_styling(full_width = T)
-modelb$bestTune
+
+modelo_b$bestTune
 ## Predicción 2: Predicciones con test_hogares
 pred_test_Modelob<- predict(modelo_b, newdata = test_hogares)
 
